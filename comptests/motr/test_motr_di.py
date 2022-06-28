@@ -55,6 +55,7 @@ from commons.utils import config_utils
 from config import CMN_CFG
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
+from libs.motr.emap_fi_adapter import InjectCorruption
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +95,10 @@ class TestCorruptDataDetection:
     def setup_class(cls):
         """ Setup class for running Motr tests"""
         logger.info("STARTED: Setup Operation")
+        cls.system_random = secrets.SystemRandom()
+
         cls.motr_obj = MotrCoreK8s()
+        cls.motr_corruption_obj = InjectCorruption()
         cls.m0kv_cfg = config_utils.read_yaml("config/motr/m0kv_test.yaml")
         logger.info("ENDED: Setup Operation")
 
@@ -199,3 +203,61 @@ class TestCorruptDataDetection:
         layout_ids = ['3']
         offsets = [4096]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
+
+    @pytest.mark.skip(reason="Feature Unavailable")
+    @pytest.mark.tags("TEST-41742")
+    @pytest.mark.motr_di
+    def test_corrupt_checksum_emap_aligned(self):
+        """
+        Checksum corruption and detection with EMAP/m0cp and m0cat
+        Copy motr block with m0cp and corrupt/update with m0cp and then
+        Corrupt checksum block using m0cp+error_injection.py script
+        Read from object with m0cat should throw an error.
+        -s 4096 -c 10 -o 1048583 /root/infile -L 3
+        -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
+        -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
+        """
+        count_list = ["4", "8"]
+        bsize_list = ["1M"]
+        layout_ids = ["9"]
+        offsets = [0]
+        # Check for deployment status using kubectl commands - Taken care in setup stage
+        # Check for hctl status - taken care in setup
+
+        # Todo: Add in for loop to iterate over count list and block size parameters
+        # corrupt_checksum_emap(self, layout_id, bsize, count, offsets):
+        for b_size, (cnt_c, cnt_u), layout, offset in zip(
+                bsize_list, count_list, layout_ids, offsets
+        ):
+            result = self.motr_corruption_obj.inject_checksum_corruption()
+
+
+    @pytest.mark.skip(reason="Feature Unavailable")
+    @pytest.mark.tags("TEST-41768")
+    @pytest.mark.motr_di
+    def test_corrupt_parity_degraded_aligned(self):
+        """
+        Degraded Mode: Parity corruption and detection with M0cp and M0cat
+        Bring the setup in degraded mode and then follow next steps:
+        Copy motr block with m0cp and corrupt/update with m0cp and then
+        Corrupt checksum block using m0cp+error_injection.py script
+        Read from object with m0cat should throw an error.
+        -s 4096 -c 10 -o 1048583 /root/infile -L 3
+        -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
+        -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
+        """
+        count_list = ["4", "8"]
+        bsize_list = ["1M"]
+        layout_ids = ["9"]
+        offsets = [0]
+        # Check for deployment status using kubectl commands - Taken care in setup stage
+        # Check for hctl status - taken care in setup
+        # Todo: Extract the parameters
+
+        # Todo: Add in for loop to iterate over count list and block size parameters
+        for b_size, (cnt_c, cnt_u), layout, offset in zip(
+                bsize_list, count_list, layout_ids, offsets
+        ):
+            self.(
+                layout, b_size, cnt_c, offset
+            )  # Todo: Remove hard coding
