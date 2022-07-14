@@ -115,15 +115,15 @@ class TestCorruptDataDetection:
         node_pod_dict = self.motr_obj.get_node_pod_dict()
         motr_client_num = self.motr_obj.get_number_of_motr_clients()
         object_id = (
-            str(self.system_random.randint(1, 1024 * 1024))
-            + ":"
-            + str(self.system_random.randint(1, 1024 * 1024))
+                str(self.system_random.randint(1, 1024 * 1024))
+                + ":"
+                + str(self.system_random.randint(1, 1024 * 1024))
         )
         for client_num in range(motr_client_num):
             for node in node_pod_dict:
 
                 for b_size, (cnt_c, cnt_u), layout, offset in zip(
-                    bsize_list, count_list, layout_ids, offsets
+                        bsize_list, count_list, layout_ids, offsets
                 ):
                     self.motr_obj.dd_cmd(b_size, cnt_c, infile, node)
                     self.motr_obj.cp_cmd(b_size, cnt_c, object_id, layout, infile, node, client_num)
@@ -171,7 +171,8 @@ class TestCorruptDataDetection:
                 # Create file for m0cp cmd
                 self.motr_obj.dd_cmd(b_size, cnt_c, infile, node)
                 # Create object
-                self.motr_obj.cp_cmd(b_size, cnt_c, object_id, layout, infile, node, 0) #client_num
+                self.motr_obj.cp_cmd(b_size, cnt_c, object_id, layout, infile, node,
+                                     0)  # client_num
                 # Read object before emap corruption
                 self.motr_obj.cat_cmd(
                     b_size, cnt_c, object_id, layout, outfile, node, client_num
@@ -195,14 +196,13 @@ class TestCorruptDataDetection:
 
                 # Read object after
                 self.motr_obj.cat_cmd(
-                    b_size, cnt_c, object_id, layout, outfile, node, 0 # Todo re-add client_num
+                    b_size, cnt_c, object_id, layout, outfile, node, 0  # Todo re-add client_num
                 )
 
                 self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
-                self.motr_obj.unlink_cmd(object_id, layout, node, 0) # Todo: client_num re-add
+                self.motr_obj.unlink_cmd(object_id, layout, node, 0)  # Todo: client_num re-add
 
             logger.info("Stop: Verify emap corruption detection operation")
-
 
     @pytest.mark.tags("TEST-41739")
     @pytest.mark.motr_di
