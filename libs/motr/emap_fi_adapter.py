@@ -153,12 +153,17 @@ class InjectCorruption(ABC):
 class MotrCorruptionAdapter(InjectCorruption):
     """Implements InjectCorruption interface to perform corruption at Motr level."""
 
-    def __init__(self, cmn_cfg, oid):
+    # Todo: TBD oid requirement
+    # def __init__(self, cmn_cfg, oid):
+    def __init__(self, cmn_cfg):
         """Initialize connection to Nodes or Pods."""
         self.cmn_cfg = cmn_cfg
         self.nodes = cmn_cfg["nodes"]
         self.connections = list()
-        self.oid = oid  # deals with a single oid at a moment
+
+        # Todo: TBD oid requirement
+        # self.oid = oid  # deals with a single oid at a moment
+
         self.master_node_list = list()
         self.worker_node_list = list()
         self.motr_obj = MotrCoreK8s()
@@ -201,7 +206,9 @@ class MotrCorruptionAdapter(InjectCorruption):
         :param oid:
         :return: COB ID in FID format to be corrupted
         """
-        return ""
+        # Should return something like:
+        # "/etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a"
+        return oid
 
     def restart_motr_container(self, index):
         """
@@ -212,10 +219,18 @@ class MotrCorruptionAdapter(InjectCorruption):
         return False
 
     def build_emap_command(self, f_type=FT_PARITY):
-        selected_shard = self.get_metadata_shard(self.oid)
-        cob_id = self.get_object_cob_id(self.oid, dtype=f_type)
+        # Todo: Remove hard coding and replace with implementation as below:
+        # selected_shard = self.get_metadata_shard(self.oid)
+        # cob_id = self.get_object_cob_id(self.oid, dtype=f_type)
+        # kwargs = dict(
+        #     corrupt_emap=cob_id, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
+        # )
+
         kwargs = dict(
-            corrupt_emap=cob_id, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
+            corrupt_emap="0x200000500000017:0x15",
+            parse_size=10485760,
+            emap_count=1,
+            metadata_db_path="/etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a",
         )
         cmd = EmapCommandBuilder.build(**kwargs)
         return cmd
