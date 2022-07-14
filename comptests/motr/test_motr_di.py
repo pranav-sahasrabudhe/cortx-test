@@ -92,7 +92,9 @@ class TestCorruptDataDetection:
         """Setup class for running Motr tests"""
         logger.info("STARTED: Setup Operation")
         cls.motr_obj = MotrCoreK8s()
-        cls.motr_corruption_obj = MotrCorruptionAdapter()
+        cls.motr_corruption_obj = MotrCorruptionAdapter(
+            CMN_CFG,
+        )
         cls.system_random = secrets.SystemRandom()
         logger.info("ENDED: Setup Operation")
 

@@ -201,9 +201,9 @@ class MotrCorruptionAdapter(InjectCorruption):
         """
         return False
 
-    def build_emap_command(self, ftype=FT_PARITY):
+    def build_emap_command(self, f_type=FT_PARITY):
         selected_shard = self.get_metadata_shard(self.oid)
-        cob_id = self.get_object_cob_id(self.oid, dtype=ftype)
+        cob_id = self.get_object_cob_id(self.oid, dtype=f_type)
         kwargs = dict(
             corrupt_emap=cob_id, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
         )
@@ -213,7 +213,7 @@ class MotrCorruptionAdapter(InjectCorruption):
     def inject_fault_k8s(self, fault_type: int):
         """
         Inject fault of type checksum or parity.
-        :param fault_type: checksum or parity
+        param fault_type: checksum or parity
         :return boolean :true :if successful
                           false: if error
         """
