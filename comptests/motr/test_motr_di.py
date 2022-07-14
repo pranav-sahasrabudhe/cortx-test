@@ -175,7 +175,7 @@ class TestCorruptDataDetection:
                                      0)  # client_num
                 # Read object before emap corruption
                 self.motr_obj.cat_cmd(
-                    b_size, cnt_c, object_id, layout, outfile, node, client_num
+                    b_size, cnt_c, object_id, layout, outfile, node, 0  # client_num
                 )
 
                 # Copy the emap cmd and run
