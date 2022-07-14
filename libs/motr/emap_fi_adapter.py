@@ -66,6 +66,11 @@ class EmapCommand:
             option = "-corrupt_emap " + str(self.opts.get("corrupt_emap"))
             self.add_option(option)
 
+        if self.opts.get("list_emap"):
+            # Cob FID of object is specified for corrupt_emap
+            option = "-list_emap " + str(self.opts.get("list_emap"))
+            self.add_option(option)
+
         if self.opts.get("emap_count"):
             # number of checksum corruption instances for parity or data
             option = "-e " + str(self.opts.get("emap_count"))
@@ -74,6 +79,11 @@ class EmapCommand:
         if self.opts.get("metadata_db_path"):
             # Metadata DB path within each motr fid dir as shown below.
             # /etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a'
+            # Todo: This needs to be extracted from list_emap command after
+            # Contents of m0d metadata file needed for error_injection.py script:
+            # ls /etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a -ltr
+            # lrwxrwxrwx 1 root root 8 Jun 10 09:38
+            # /etc/cortx/motr/m0d-0x7200000000000001:0x32/db/o/100000000000000:2a -> /dev/sdc
             option = "-m " + str(self.opts.get("metadata_db_path"))
             self.add_option(option)
 
