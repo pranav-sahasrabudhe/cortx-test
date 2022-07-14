@@ -160,7 +160,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         self.cmn_cfg = cmn_cfg
         self.nodes = cmn_cfg["nodes"]
         self.connections = list()
-
+        self.emap_cmd_bldr = EmapCommandBuilder()
         # Todo: TBD oid requirement
         # self.oid = oid  # deals with a single oid at a moment
 
@@ -232,7 +232,7 @@ class MotrCorruptionAdapter(InjectCorruption):
             emap_count=1,
             metadata_db_path="/etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a",
         )
-        cmd = EmapCommandBuilder.build(**kwargs)
+        cmd = self.emap_cmd_bldr.build(**kwargs)
         return cmd
 
     def inject_fault_k8s(self, fault_type: int):
