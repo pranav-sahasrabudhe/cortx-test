@@ -223,7 +223,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         # selected_shard = self.get_metadata_shard(self.oid)
         # cob_id = self.get_object_cob_id(self.oid, dtype=f_type)
         # kwargs = dict(
-        #     corrupt_emap=cob_id, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
+        # corrupt_emap=cob_id, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
         # )
 
         kwargs = dict(

@@ -148,6 +148,62 @@ class TestCorruptDataDetection:
 
             logger.info("Stop: Verify multiple m0cp/cat operation")
 
+    # pylint: disable=R0914
+    # Todo: WIP -------------------
+    def motr_inject_checksum_corruption(self, layout_ids, bsize_list, count_list, offsets):
+        logger.info("STARTED: m0cp, corrupt and m0cat workflow")
+        infile = TEMP_PATH + "input"
+        outfile = TEMP_PATH + "output"
+        node_pod_dict = self.motr_obj.get_node_pod_dict()
+        motr_client_num = self.motr_obj.get_number_of_motr_clients()
+        object_id = (
+                str(self.system_random.randint(1, 1024 * 1024))
+                + ":"
+                + str(self.system_random.randint(1, 1024 * 1024))
+        )
+
+        # Todo: If needed then only enable all clients loop
+        # for client_num in range(motr_client_num):
+        for node in node_pod_dict:
+            for b_size, (cnt_c, cnt_u), layout, offset in zip(
+                    bsize_list, count_list, layout_ids, offsets
+            ):
+                # Create file for m0cp cmd
+                self.motr_obj.dd_cmd(b_size, cnt_c, infile, node)
+                # Create object
+                self.motr_obj.cp_cmd(b_size, cnt_c, object_id, layout, infile, node, 0) #client_num
+                # Read object before emap corruption
+                self.motr_obj.cat_cmd(
+                    b_size, cnt_c, object_id, layout, outfile, node, client_num
+                )
+
+                # Copy the emap cmd and run
+                self.motr_corruption_obj.inject_checksum_corruption()
+
+                # Actual object corruption is not needed for now
+                # Can change based on the flag to the method
+                # self.motr_obj.cp_update_cmd(
+                #     b_size=b_size,
+                #     count=cnt_u,
+                #     obj=object_id,
+                #     layout=layout,
+                #     file=infile,
+                #     node=node,
+                #     client_num=client_num,
+                #     offset=offset,
+                # )
+
+                # Read object after
+                self.motr_obj.cat_cmd(
+                    b_size, cnt_c, object_id, layout, outfile, node, 0 # Todo re-add client_num
+                )
+
+                self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
+                self.motr_obj.unlink_cmd(object_id, layout, node, 0) # Todo: client_num re-add
+
+            logger.info("Stop: Verify emap corruption detection operation")
+
+
     @pytest.mark.tags("TEST-41739")
     @pytest.mark.motr_di
     def test_m0cp_m0cat_block_corruption(self):
@@ -197,7 +253,7 @@ class TestCorruptDataDetection:
         offsets = [4096]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
 
-    # Todo: Remove this marker line ----- Pranav Tests
+    # Todo: Remove this marker line ----- Pranav Tests --------------------------------
     # @pytest.mark.skip(reason="Feature Unavailable")
     @pytest.mark.tags("TEST-41742")
     @pytest.mark.motr_di
@@ -220,10 +276,10 @@ class TestCorruptDataDetection:
 
         # Todo: Add in for loop to iterate over count list and block size parameters
         # corrupt_checksum_emap(self, layout_id, bsize, count, offsets):
-        for b_size, (cnt_c, cnt_u), layout, offset in zip(
-            bsize_list, count_list, layout_ids, offsets
-        ):
-            result = self.motr_corruption_obj.inject_checksum_corruption()
+        # for b_size, (cnt_c, cnt_u), layout, offset in zip(
+        #     bsize_list, count_list, layout_ids, offsets
+        # ):
+        self.motr_inject_checksum_corruption(layout_ids, bsize_list, count_list, offsets)
 
     # @pytest.mark.skip(reason="Feature Unavailable")
     # @pytest.mark.tags("TEST-41768")
