@@ -54,7 +54,7 @@ import pytest
 from config import CMN_CFG
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
-from libs.motr.emap_fi_adapter import InjectCorruption
+from libs.motr.emap_fi_adapter import InjectCorruption, MotrCorruptionAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +92,7 @@ class TestCorruptDataDetection:
         """Setup class for running Motr tests"""
         logger.info("STARTED: Setup Operation")
         cls.motr_obj = MotrCoreK8s()
-        cls.motr_corruption_obj = InjectCorruption()
+        cls.motr_corruption_obj = MotrCorruptionAdapter()
         cls.system_random = secrets.SystemRandom()
         logger.info("ENDED: Setup Operation")
 
