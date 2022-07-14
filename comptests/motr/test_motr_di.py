@@ -54,6 +54,8 @@ import pytest
 from config import CMN_CFG
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
+from libs.motr.emap_fi_adapter import InjectCorruption
+
 logger = logging.getLogger(__name__)
 
 
@@ -89,9 +91,10 @@ class TestCorruptDataDetection:
 
     @classmethod
     def setup_class(cls):
-        """ Setup class for running Motr tests"""
+        """Setup class for running Motr tests"""
         logger.info("STARTED: Setup Operation")
         cls.motr_obj = MotrCoreK8s()
+        cls.motr_corruption_obj = InjectCorruption()
         cls.system_random = secrets.SystemRandom()
         logger.info("ENDED: Setup Operation")
 
@@ -107,31 +110,39 @@ class TestCorruptDataDetection:
         validate the corruption with md5sum after M0CAT.
         """
         logger.info("STARTED: m0cp, corrupt and m0cat workflow")
-        infile = TEMP_PATH + 'input'
-        outfile = TEMP_PATH + 'output'
+        infile = TEMP_PATH + "input"
+        outfile = TEMP_PATH + "output"
         node_pod_dict = self.motr_obj.get_node_pod_dict()
         motr_client_num = self.motr_obj.get_number_of_motr_clients()
-        object_id = str(self.system_random.randint(1, 1024 * 1024)) + ":" + \
-                    str(self.system_random.randint(1, 1024 * 1024))
+        object_id = (
+            str(self.system_random.randint(1, 1024 * 1024))
+            + ":"
+            + str(self.system_random.randint(1, 1024 * 1024))
+        )
         for client_num in range(motr_client_num):
             for node in node_pod_dict:
 
-                for b_size, (cnt_c, cnt_u), layout, offset in zip(bsize_list, count_list,
-                                                                  layout_ids, offsets):
-                    self.motr_obj.dd_cmd(
-                        b_size, cnt_c, infile, node)
-                    self.motr_obj.cp_cmd(
-                        b_size, cnt_c, object_id,
-                        layout, infile, node, client_num)
+                for b_size, (cnt_c, cnt_u), layout, offset in zip(
+                    bsize_list, count_list, layout_ids, offsets
+                ):
+                    self.motr_obj.dd_cmd(b_size, cnt_c, infile, node)
+                    self.motr_obj.cp_cmd(b_size, cnt_c, object_id, layout, infile, node, client_num)
                     self.motr_obj.cat_cmd(
-                        b_size, cnt_c, object_id,
-                        layout, outfile, node, client_num)
+                        b_size, cnt_c, object_id, layout, outfile, node, client_num
+                    )
                     self.motr_obj.cp_update_cmd(
-                        b_size=b_size, count=cnt_u,
-                        obj=object_id, layout=layout,
-                        file=infile, node=node, client_num=client_num, offset=offset)
-                    self.motr_obj.cat_cmd(b_size, cnt_c, object_id, layout, outfile, node,
-                                          client_num)
+                        b_size=b_size,
+                        count=cnt_u,
+                        obj=object_id,
+                        layout=layout,
+                        file=infile,
+                        node=node,
+                        client_num=client_num,
+                        offset=offset,
+                    )
+                    self.motr_obj.cat_cmd(
+                        b_size, cnt_c, object_id, layout, outfile, node, client_num
+                    )
                     self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
                     self.motr_obj.unlink_cmd(object_id, layout, node, client_num)
 
@@ -146,9 +157,9 @@ class TestCorruptDataDetection:
         -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
         -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
         """
-        count_list = [['10', '1'], ['10', '1']]
-        bsize_list = ['4K', '4K']
-        layout_ids = ['3', '3']
+        count_list = [["10", "1"], ["10", "1"]]
+        bsize_list = ["4K", "4K"]
+        layout_ids = ["3", "3"]
         offsets = [0, 16384]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
 
@@ -160,12 +171,14 @@ class TestCorruptDataDetection:
         In degraded mode Corrupt data block using m0cp and reading
         from object with m0cat should error.
         """
-        logger.info("Step 1: Shutdown random data pod by making replicas=0 and "
-                    "verify cluster & remaining pods status")
+        logger.info(
+            "Step 1: Shutdown random data pod by making replicas=0 and "
+            "verify cluster & remaining pods status"
+        )
         self.motr_obj.switch_cluster_to_degraded_mode()
-        count_list = [['10', '1'], ['10', '1']]
-        bsize_list = ['4K', '4K']
-        layout_ids = ['3', '3']
+        count_list = [["10", "1"], ["10", "1"]]
+        bsize_list = ["4K", "4K"]
+        layout_ids = ["3", "3"]
         offsets = [0, 16384]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
 
@@ -178,8 +191,71 @@ class TestCorruptDataDetection:
         -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
         -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
         """
-        count_list = [['10', '10']]
-        bsize_list = ['4K']
-        layout_ids = ['3']
+        count_list = [["10", "10"]]
+        bsize_list = ["4K"]
+        layout_ids = ["3"]
         offsets = [4096]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
+
+
+
+
+
+    # Todo: Remove this marker line ----- Pranav Tests
+    # @pytest.mark.skip(reason="Feature Unavailable")
+    @pytest.mark.tags("TEST-41742")
+    @pytest.mark.motr_di
+    def test_corrupt_checksum_emap_aligned(self):
+        """
+        Checksum corruption and detection with EMAP/m0cp and m0cat
+        Copy motr block with m0cp and corrupt/update with m0cp and then
+        Corrupt checksum block using m0cp+error_injection.py script
+        Read from object with m0cat should throw an error.
+        -s 4096 -c 10 -o 1048583 /root/infile -L 3
+        -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
+        -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
+        """
+        count_list = ["4", "8"]
+        bsize_list = ["1M"]
+        layout_ids = ["9"]
+        offsets = [0]
+        # Check for deployment status using kubectl commands - Taken care in setup stage
+        # Check for hctl status - taken care in setup
+
+        # Todo: Add in for loop to iterate over count list and block size parameters
+        # corrupt_checksum_emap(self, layout_id, bsize, count, offsets):
+        for b_size, (cnt_c, cnt_u), layout, offset in zip(
+                bsize_list, count_list, layout_ids, offsets
+        ):
+            result = self.motr_corruption_obj.inject_checksum_corruption()
+
+
+    @pytest.mark.skip(reason="Feature Unavailable")
+    @pytest.mark.tags("TEST-41768")
+    @pytest.mark.motr_di
+    def test_corrupt_parity_degraded_aligned(self):
+        """
+        Degraded Mode: Parity corruption and detection with M0cp and M0cat
+        Bring the setup in degraded mode and then follow next steps:
+        Copy motr block with m0cp and corrupt/update with m0cp and then
+        Corrupt checksum block using m0cp+error_injection.py script
+        Read from object with m0cat should throw an error.
+        -s 4096 -c 10 -o 1048583 /root/infile -L 3
+        -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
+        -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
+        """
+        count_list = ["4", "8"]
+        bsize_list = ["1M"]
+        layout_ids = ["9"]
+        offsets = [0]
+        # Check for deployment status using kubectl commands - Taken care in setup stage
+        # Check for hctl status - taken care in setup
+        # Todo: Extract the parameters
+
+        # Todo: Add in for loop to iterate over count list and block size parameters
+        for b_size, (cnt_c, cnt_u), layout, offset in zip(
+                bsize_list, count_list, layout_ids, offsets
+        ):
+            self.(
+                layout, b_size, cnt_c, offset
+            )  # Todo: Remove hard coding
