@@ -103,6 +103,8 @@ class EmapCommand:
         # 17:0x15 -e 1 -m /etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a
         # -parse_size 10485760
         logging.debug(f"Debug: ~~~~~ Options_str = {options_str}")
+        temp_str = " ".join((str(self.parent_cmd), options_str))
+        logging.debug(f"Debug: ~~~~~ Final STR = {temp_str}")
         return " ".join((str(self.parent_cmd), options_str))
 
 
