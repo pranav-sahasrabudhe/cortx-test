@@ -98,6 +98,7 @@ class EmapCommand:
         if len(self.cmd_options) == 0:
             return self.parent_cmd
         options_str = " ".join(map(str, self.cmd_options))
+        logging.debug(f"Debug: ~~~~~ Options_str = {options_str}")
         return " ".join((self.parent_cmd, options_str))
 
 
