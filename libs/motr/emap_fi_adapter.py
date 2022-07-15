@@ -260,7 +260,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                             pod=pod_name,
                             namespace=NAMESPACE,
                             command_suffix=f"-c " + str({motr_containers[0]}) + " -- "
-                            f"{self.build_emap_command(fault_type)}",
+                            + f"{self.build_emap_command(fault_type)}",
                             decode=True,
                         )
                         if resp:
