@@ -127,7 +127,7 @@ class EmapCommandBuilder:
         Constructs the concrete command with provided options or arguments.
         """
         cmd = self._command
-        cmd.build_options(kwargs)
+        cmd.build_options(**kwargs)
         return cmd
 
 
@@ -259,7 +259,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                             operation="exec",
                             pod=pod_name,
                             namespace=NAMESPACE,
-                            command_suffix=f"-c {motr_containers[0]} -- "
+                            command_suffix=f"-c " + str({motr_containers[0]}) + " -- "
                             f"{self.build_emap_command(fault_type)}",
                             decode=True,
                         )
