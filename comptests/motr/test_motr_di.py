@@ -178,7 +178,8 @@ class TestCorruptDataDetection:
                     b_size, cnt_c, object_id, layout, outfile, node, 0  # client_num
                 )
 
-                # Copy the emap cmd and run
+                # Todo: Copy the emap script
+                # Todo: and run Emap
                 self.motr_corruption_obj.inject_checksum_corruption()
 
                 # Actual object corruption is not needed for now
@@ -282,31 +283,26 @@ class TestCorruptDataDetection:
         self.motr_inject_checksum_corruption(layout_ids, bsize_list, count_list, offsets)
 
     # @pytest.mark.skip(reason="Feature Unavailable")
-    # @pytest.mark.tags("TEST-41768")
-    # @pytest.mark.motr_di
-    # def test_corrupt_parity_degraded_aligned(self):
-    #     """
-    #     Degraded Mode: Parity corruption and detection with M0cp and M0cat
-    #     Bring the setup in degraded mode and then follow next steps:
-    #     Copy motr block with m0cp and corrupt/update with m0cp and then
-    #     Corrupt checksum block using m0cp+error_injection.py script
-    #     Read from object with m0cat should throw an error.
-    #     -s 4096 -c 10 -o 1048583 /root/infile -L 3
-    #     -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
-    #     -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
-    #     """
-    #     count_list = ["4", "8"]
-    #     bsize_list = ["1M"]
-    #     layout_ids = ["9"]
-    #     offsets = [0]
-    #     # Check for deployment status using kubectl commands - Taken care in setup stage
-    #     # Check for hctl status - taken care in setup
-    #     # Todo: Extract the parameters
-    #
-    #     # Todo: Add in for loop to iterate over count list and block size parameters
-    #     for b_size, (cnt_c, cnt_u), layout, offset in zip(
-    #             bsize_list, count_list, layout_ids, offsets
-    #     ):
-    #         self.(
-    #             layout, b_size, cnt_c, offset
-    #         )  # Todo: Remove hard coding
+    @pytest.mark.tags("TEST-41768")
+    @pytest.mark.motr_di
+    def test_corrupt_parity_degraded_aligned(self):
+        """
+        Degraded Mode: Parity corruption and detection with M0cp and M0cat
+        Bring the setup in degraded mode and then follow next steps:
+        Copy motr block with m0cp and corrupt/update with m0cp and then
+        Corrupt checksum block using m0cp+error_injection.py script
+        Read from object with m0cat should throw an error.
+        -s 4096 -c 10 -o 1048583 /root/infile -L 3
+        -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
+        -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
+        """
+        count_list = [["4", "8"]]
+        bsize_list = ["1M"]
+        layout_ids = ["9"]
+        offsets = [0]
+        # Check for deployment status using kubectl commands - Taken care in setup stage
+        # Check for hctl status - taken care in setup
+        # Todo: Extract the parameters
+
+        # Todo: Add in for loop to iterate over count list and block size parameters
+        self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
