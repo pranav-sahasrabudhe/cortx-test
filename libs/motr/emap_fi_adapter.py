@@ -98,8 +98,12 @@ class EmapCommand:
         if len(self.cmd_options) == 0:
             return self.parent_cmd
         options_str = " ".join(map(str, self.cmd_options))
+        # Debug: ~~~~~ Options_str =
+        # -corrupt_emap 0x2000005000000
+        # 17:0x15 -e 1 -m /etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a
+        # -parse_size 10485760
         logging.debug(f"Debug: ~~~~~ Options_str = {options_str}")
-        return " ".join((self.parent_cmd, options_str))
+        return " ".join((str(self.parent_cmd), options_str))
 
 
 class EmapCommandBuilder:
