@@ -207,6 +207,14 @@ class MotrCorruptionAdapter(InjectCorruption):
         """
         return ""
 
+    def get_metadata_db_path(self, metadata_db_path):
+        """
+        Locate metadata shard.
+        :param metadata_db_path:
+        :return: metadata_db_path
+        """
+        return metadata_db_path
+
     def get_metadata_shard(self, oid):
         """
         Locate metadata shard.

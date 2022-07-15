@@ -296,13 +296,12 @@ class TestCorruptDataDetection:
         -s 4096 -c 1 -o 1048583 /root/myfile -L 3 -u -O 0
         -o 1048583 -s 4096 -c 10 -L 3 /root/dest_myfile
         """
-        count_list = [["4", "8"]]
-        bsize_list = ["1M"]
-        layout_ids = ["9"]
+        count_list = [["4", "8"], ["4", "8"]]
+        bsize_list = ["1M","1M"]
+        layout_ids = ["9","9"]
         offsets = [0]
         # Check for deployment status using kubectl commands - Taken care in setup stage
-        # Check for hctl status - taken care in setup
-        # Todo: Extract the parameters
-
-        # Todo: Add in for loop to iterate over count list and block size parameters
+        # Todo: Invoke in degraded mode
+        # Todo: Find parity block and corrupt
+        #
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
