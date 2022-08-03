@@ -188,6 +188,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         : param dtype:
         : return: COB ID in FID format to be corrupted
         """
+        logging.info(f"Returning oid: {oid}")
         return oid
 
     def get_metadata_device(self, oid):
