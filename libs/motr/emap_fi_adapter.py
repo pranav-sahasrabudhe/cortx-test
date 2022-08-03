@@ -189,13 +189,14 @@ class MotrCorruptionAdapter(InjectCorruption):
         : return: COB ID in FID format to be corrupted
         """
         logging.info(f"Returning 1st oid from list : {oid}")
+        # Todo: Get from m0trace parser in the format of 0x200000500000017:0x15
         return oid[0]
 
     def get_metadata_device(self, oid):
         """
         Locate metadata device from solution.yaml.
-        :param oid:
-        :return: COB ID in FID format to be corrupted
+        :param oid
+        :return: metadata device str
         """
         # Todo - read from solution.yaml
         return "/dev/sdc"
@@ -213,7 +214,6 @@ class MotrCorruptionAdapter(InjectCorruption):
         cob_id = self.get_object_cob_id(oid, dtype=ftype)
         emap_bldr = EmapCommandBuilder()
         kwargs = dict(
-            # list_emap="list_emap",
             corrupt_emap=cob_id,
             parse_size=10485760,
             emap_count=1,
@@ -222,7 +222,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         cmd = EmapCommandBuilder.build(emap_bldr, **kwargs)
         return cmd
 
-    def inject_fault_k8s(self, oid: list, fault_type: int):
+    def inject_fault_k8s(self, oid: dict, fault_type: int):
         """
         Inject fault of type checksum or parity.
         :param oid object id list
@@ -272,14 +272,14 @@ class MotrCorruptionAdapter(InjectCorruption):
             LOGGER.exception("Exception occurred while injecting emap fault", exc_info=ex)
             return False
 
-    def inject_checksum_corruption(self, oid: list):
+    def inject_checksum_corruption(self, oid: dict):
         """Injects data checksum error by providing the DU FID."""
         return self.inject_fault_k8s(oid, FT_CHKSUM)
 
-    def inject_parity_corruption(self, oid: list):
+    def inject_parity_corruption(self, oid: dict):
         """Injects parity checksum error by providing the Parity FID."""
         return self.inject_fault_k8s(oid, FT_PARITY)
 
-    def inject_metadata_corruption(self, oid: list):
+    def inject_metadata_corruption(self, oid: dict):
         """Not supported."""
         raise NotImplementedError("Not Implemented")
