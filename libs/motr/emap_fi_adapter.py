@@ -188,8 +188,8 @@ class MotrCorruptionAdapter(InjectCorruption):
         : param dtype:
         : return: COB ID in FID format to be corrupted
         """
-        logging.info(f"Returning oid: {oid}")
-        return oid
+        logging.info(f"Returning 1st oid from list : {oid}")
+        return oid[0]
 
     def get_metadata_device(self, oid):
         """
@@ -213,7 +213,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         cob_id = self.get_object_cob_id(oid, dtype=ftype)
         emap_bldr = EmapCommandBuilder()
         kwargs = dict(
-            list_emap="list_emap",
+            # list_emap="list_emap",
             corrupt_emap=cob_id,
             parse_size=10485760,
             emap_count=1,
