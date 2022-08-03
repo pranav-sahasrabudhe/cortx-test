@@ -283,7 +283,7 @@ class TestCorruptDataDetection:
                 # Create object
                 object_id_list.append(object_id)  # Store object_id for future delete
                 self.motr_obj.cp_cmd(
-                    b_size, cnt_c, object_id, layout, infile, node_pod, 0
+                    b_size, cnt_c, object_id, layout, infile, node_pod, 0, di_g=True
                 )  # client_num
 
                 logger.debug(f"object_id_list is: ###### {object_id_list}")
@@ -300,7 +300,9 @@ class TestCorruptDataDetection:
 
         # Todo
         # self.motr_obj.dump_m0trace_log(filepath=, node=)
-        tfid_dict = self.motr_obj.read_m0trace_log(filepath=)
+        # Todo
+        formed_path = "/root/m0tracexxxyyyzzz.log"
+        tfid_dict = self.motr_obj.read_m0trace_log(filepath=formed_path)
 
         # Run Emap on all objects
         self.motr_corruption_obj.inject_checksum_corruption(tfid_dict)
