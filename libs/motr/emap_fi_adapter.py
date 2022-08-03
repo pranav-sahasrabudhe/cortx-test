@@ -188,7 +188,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         : param dtype:
         : return: COB ID in FID format to be corrupted
         """
-        return ""
+        return oid
 
     def get_metadata_device(self, oid):
         """
@@ -212,11 +212,11 @@ class MotrCorruptionAdapter(InjectCorruption):
         cob_id = self.get_object_cob_id(oid, dtype=ftype)
         emap_bldr = EmapCommandBuilder()
         kwargs = dict(
-                      list_emap="list_emap",
-                      corrupt_emap=cob_id,
-                      parse_size=10485760,
-                      emap_count=1,
-                      metadata_db_path=selected_shard
+            list_emap="list_emap",
+            corrupt_emap=cob_id,
+            parse_size=10485760,
+            emap_count=1,
+            metadata_db_path=selected_shard,
         )
         cmd = EmapCommandBuilder.build(emap_bldr, **kwargs)
         return cmd
@@ -275,7 +275,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         """Injects data checksum error by providing the DU FID."""
         return self.inject_fault_k8s(oid, FT_CHKSUM)
 
-    def inject_parity_corruption(self,oid: list):
+    def inject_parity_corruption(self, oid: list):
         """Injects parity checksum error by providing the Parity FID."""
         return self.inject_fault_k8s(oid, FT_PARITY)
 
