@@ -286,7 +286,10 @@ class TestCorruptDataDetection:
                     b_size, cnt_c, object_id, layout, infile, node_pod, 0, di_g=True
                 )  # client_num
 
-                logger.debug(f"object_id_list is: ###### {object_id_list}")
+                # Todo: In progress
+                self.motr_obj.dump_m0trace_log(f"{node_pod}-trace_log.txt", node_pod)
+                resp = self.motr_obj.read_m0trace_log(f"{node_pod}-trace_log.txt")
+                logger.debug(resp)
 
         logger.info(f"Copying the error injection script to cortx_motr_io containers in data pods.")
         pod_list = self.motr_obj.node_obj.get_all_pods(const.POD_NAME_PREFIX)
@@ -298,14 +301,15 @@ class TestCorruptDataDetection:
             if not result:
                 raise FileNotFoundError
 
-        # Todo
-        # self.motr_obj.dump_m0trace_log(filepath=, node=)
-        # Todo
-        formed_path = "/root/m0tracexxxyyyzzz.log"
-        tfid_dict = self.motr_obj.read_m0trace_log(filepath=formed_path)
+        # Todo - Pragam to write lib for extraction for metadata device
+        # Todo: Optimize fetch_gob - list_emap from emap_fi_adapter
+        tfid_data_list, tfid_parity_list = self.motr_obj.fetch_gob(
+            "/dev/sdc", const.PARSE_SIZE, resp
+        )
+        logger.info(f"tfid_parity_list = {tfid_parity_list}")
 
         # Run Emap on all objects
-        self.motr_corruption_obj.inject_checksum_corruption(tfid_dict)
+        self.motr_corruption_obj.inject_checksum_corruption(tfid_data_list)
 
         # Todo: need to restart m0tr container for taking emap effect?
 

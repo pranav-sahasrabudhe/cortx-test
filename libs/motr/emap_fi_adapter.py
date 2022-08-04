@@ -222,7 +222,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         cmd = EmapCommandBuilder.build(emap_bldr, **kwargs)
         return cmd
 
-    def inject_fault_k8s(self, oid: dict, fault_type: int):
+    def inject_fault_k8s(self, oid: list, fault_type: int):
         """
         Inject fault of type checksum or parity.
         :param oid object id list
@@ -272,14 +272,14 @@ class MotrCorruptionAdapter(InjectCorruption):
             LOGGER.exception("Exception occurred while injecting emap fault", exc_info=ex)
             return False
 
-    def inject_checksum_corruption(self, oid: dict):
+    def inject_checksum_corruption(self, oid: list):
         """Injects data checksum error by providing the DU FID."""
         return self.inject_fault_k8s(oid, FT_CHKSUM)
 
-    def inject_parity_corruption(self, oid: dict):
+    def inject_parity_corruption(self, oid: list):
         """Injects parity checksum error by providing the Parity FID."""
         return self.inject_fault_k8s(oid, FT_PARITY)
 
-    def inject_metadata_corruption(self, oid: dict):
+    def inject_metadata_corruption(self, oid: list):
         """Not supported."""
         raise NotImplementedError("Not Implemented")

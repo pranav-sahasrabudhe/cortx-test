@@ -872,30 +872,30 @@ class MotrCoreK8s:
                 if isinstance(conn, LogicalNode):
                     conn.disconnect()
 
-    def dump_m0trace_log(self, filepath, node):
-        """This method is used to parse the m0trace logs on all the data pods,
-        filepath: m0trace log path
+    def dump_m0trace_log(self, dest_filepath, node):
+        """This method is used to dump the m0trace logs on all the data pods to the master node,
+        dest_filepath: m0trace log path
         """
         list_trace = common_cmd.LIST_M0TRACE
         resp = self.node_obj.send_k8s_cmd(
             operation="exec",
-            pod=self.node_pod_dict[node],
+            pod=str(self.node_pod_dict[node]),
             namespace=common_const.NAMESPACE,
             command_suffix=f"-c {common_const.HAX_CONTAINER_NAME} " f"-- {list_trace}",
             decode=True,
         )
         latest_trace_file = resp.split("\n")[-1]
         log.debug("Resp: %s", latest_trace_file)
-        cmd = Template(common_cmd.M0TRACE).substitute(trace=latest_trace_file, file=filepath)
+        cmd = Template(common_cmd.M0TRACE).substitute(trace=latest_trace_file, file=dest_filepath)
         resp = self.node_obj.send_k8s_cmd(
             operation="exec",
-            pod=self.node_pod_dict[node],
+            pod=str(self.node_pod_dict[node]),
             namespace=common_const.NAMESPACE,
             command_suffix=f"-c {common_const.HAX_CONTAINER_NAME} " f"-- {cmd}",
             decode=True,
         )
         log.info("Resp of trace: %s", resp)
-        return resp, filepath
+        return resp, dest_filepath
 
     def read_m0trace_log(self, filepath):
         """
@@ -935,10 +935,14 @@ class MotrCoreK8s:
         return checksum_dict
 
     # pylint: disable=too-many-locals
-    def fetch_gob(self, metadata_device, parse_size, fid: dict):
+    def fetch_gob(self, metadata_device, parse_size, fid: dict) -> list:
         """
         This method helps to verify the gob id by running emap_list using error_injection script
         it returns the corresponding data,parity block checksum id
+        :param metadata_device - medata device e.g. /dev/sdc
+        :Param parse_size - Size of metadata to be parsed e.g. 10MB = 10485760
+        :param fid - dict of data and parity with their target FID
+        :return - 2 Lists of data cksum and parity cksum
         """
         pod_list = self.node_obj.get_all_pods(common_const.POD_NAME_PREFIX)
         log.debug("pod list is %s", pod_list)
