@@ -50,6 +50,8 @@ import os
 import csv
 import logging
 import secrets
+from builtins import list
+
 import pytest
 from commons import constants as const
 from commons.helpers.pods_helper import LogicalNode
@@ -247,7 +249,8 @@ class TestCorruptDataDetection:
         infile = TEMP_PATH + "input"
         outfile = TEMP_PATH + "output"
         node_pod_dict = self.motr_obj.get_node_pod_dict()
-        object_id_list = []
+        object_id_list = list()
+        fid_dict = dict()
 
         # ON THE DATA POD: ==========>>>>>>
 
@@ -288,8 +291,8 @@ class TestCorruptDataDetection:
 
                 # Todo: In progress
                 self.motr_obj.dump_m0trace_log(f"{node_pod}-trace_log.txt", node_pod)
-                resp = self.motr_obj.read_m0trace_log(f"{node_pod}-trace_log.txt")
-                logger.debug(resp)
+                fid_dict = self.motr_obj.read_m0trace_log(f"{node_pod}-trace_log.txt")
+                logger.debug(fid_dict)
 
         logger.info(f"Copying the error injection script to cortx_motr_io containers in data pods.")
         pod_list = self.motr_obj.node_obj.get_all_pods(const.POD_NAME_PREFIX)
@@ -304,7 +307,7 @@ class TestCorruptDataDetection:
         # Todo - Pragam to write lib for extraction for metadata device
         # Todo: Optimize fetch_gob - list_emap from emap_fi_adapter
         tfid_data_list, tfid_parity_list = self.motr_obj.fetch_gob(
-            "/dev/sdc", const.PARSE_SIZE, resp
+            "/dev/sdc", const.PARSE_SIZE, fid_dict
         )
         logger.info(f"tfid_parity_list = {tfid_parity_list}")
 
