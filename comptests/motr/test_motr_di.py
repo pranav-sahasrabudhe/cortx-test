@@ -304,7 +304,7 @@ class TestCorruptDataDetection:
             if not result:
                 raise FileNotFoundError
 
-        # Todo - Pragam to write lib for extraction for metadata device
+        # Todo - Pragam to write lib for extraction for metadata device - workaround with single CVG
         # Todo: Optimize fetch_gob - list_emap from emap_fi_adapter
         tfid_data_list, tfid_parity_list = self.motr_obj.fetch_gob(
             "/dev/sdc", const.PARSE_SIZE, fid_dict
@@ -326,7 +326,8 @@ class TestCorruptDataDetection:
                     b_size, cnt_c, object_id_list[index], layout, outfile, node_pod, 0, di_g=True
                 )
                 self.motr_obj.md5sum_cmd(infile, outfile, node_pod, flag=True)
-                self.motr_obj.unlink_cmd(object_id_list[index], layout, node_pod, 0)
+                # Todo: Temp removed delete ops
+                # self.motr_obj.unlink_cmd(object_id_list[index], layout, node_pod, 0)
 
         logger.info("Stop: Verify emap corruption detection operation")
         return True  # Todo: return status to be worked as per responses
