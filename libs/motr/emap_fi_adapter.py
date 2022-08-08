@@ -208,7 +208,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         :param metadata_device:
         :param parse_size:
         :param fid: dict of object id of data and parity block
-        :return: FID to be corrupted
+        :return: list data and parity of FID to be corrupted
         """
         pod_list = self.master_node_list[0].get_all_pods(POD_NAME_PREFIX)
         LOGGER.debug("pod list is %s", pod_list)
@@ -265,7 +265,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         """
         Locate metadata shard.
         :param master_node_obj: master node obj
-        :return: COB ID to be corrupted
+        :return: metadata device path
         """
         metadata_device = ''
         pod_list = master_node_obj.get_all_pods(pod_prefix=POD_NAME_PREFIX)
