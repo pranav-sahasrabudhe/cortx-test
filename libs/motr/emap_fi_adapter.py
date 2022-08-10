@@ -324,7 +324,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         try:
             # data_pods = self.master_node_list[0].get_all_pods_and_ips(POD_NAME_PREFIX)
             data_pods = self.master_node_list[0].get_all_pods(POD_NAME_PREFIX)
-            for pod_name in enumerate(data_pods):
+            for pod_name in data_pods:
                 motr_containers = self.master_node_list[0].get_container_of_pod(
                     pod_name, MOTR_CONTAINER_PREFIX
                 )
