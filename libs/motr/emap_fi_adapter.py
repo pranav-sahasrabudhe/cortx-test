@@ -266,7 +266,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         return data_checksum_list, parity_checksum_list
 
     @staticmethod
-    def get_metadata_shard(master_node_obj: LogicalNode):
+    def get_metadata_devive(master_node_obj: LogicalNode):
         """
         Locate metadata shard.
         :param master_node_obj: master node obj

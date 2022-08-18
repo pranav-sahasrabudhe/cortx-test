@@ -54,6 +54,7 @@ from builtins import list
 
 import pytest
 
+from commons import const
 from commons.helpers.pods_helper import LogicalNode
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
@@ -557,7 +558,7 @@ class TestCorruptDataDetection:
                 # Fetch the FID from m0trace log
                 fid_resp = self.motr_obj.read_m0trace_log(filepath)
                 logger.debug("fid_resp is %s", fid_resp)
-            metadata_path = self.emap_adapter_obj.get_metadata_device(
+            metadata_path = self.emap_adapter_obj.get_metadata_devive(
                 self.motr_obj.master_node_list[0]
             )
             logger.debug("metadata device is %s", metadata_path[0])
