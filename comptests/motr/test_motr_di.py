@@ -53,8 +53,9 @@ import secrets
 from builtins import list
 
 import pytest
-from commons import constants as const
-from commons.helpers.pods_helper import LogicalNode
+
+from commons.utils import assert_utils
+from config import CMN_CFG
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
 from libs.motr.emap_fi_adapter import MotrCorruptionAdapter
@@ -63,7 +64,6 @@ from commons.utils import assert_utils
 from commons.helpers.health_helper import Health
 from config import CMN_CFG
 from commons.params import MOTR_DI_ERR_INJ_LOCAL_PATH
-from commons.helpers.host import Host
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +111,7 @@ class TestCorruptDataDetection:
         """Setup class for running Motr tests"""
         logger.info("STARTED: Setup Operation")
         cls.motr_obj = MotrCoreK8s()
-        cls.motr_corruption_obj = MotrCorruptionAdapter(CMN_CFG, oid="1234:1234")
+        cls.emap_adapter_obj = MotrCorruptionAdapter(CMN_CFG, oid="1234:1234")
         cls.dtm_obj = DTMRecoveryTestLib(max_attempts=0)
         cls.master_node_list = list()
         cls.worker_node_list = list()
@@ -193,9 +193,10 @@ class TestCorruptDataDetection:
         and corrupt single parity block's CKSUM with emap script and
         validate the corruption M0CAT.
         """
-        logger.info("STARTED: m0cp, corrupt parity and m0cat workflow")
-        infile = TEMP_PATH + "input"
-        outfile = TEMP_PATH + "output"
+        logger.info("STARTED: m0cat workflow")
+        infile = kwargs.get("infile", TEMP_PATH + "input")
+        outfile = kwargs.get("outfile", TEMP_PATH + "output")
+        client_num = kwargs.get("client_num", 1)
         node_pod_dict = self.motr_obj.get_node_pod_dict()
         motr_client_num = self.motr_obj.get_number_of_motr_clients()
         object_id = (
@@ -249,8 +250,7 @@ class TestCorruptDataDetection:
         infile = TEMP_PATH + "input"
         outfile = TEMP_PATH + "output"
         node_pod_dict = self.motr_obj.get_node_pod_dict()
-        object_id_list = list()
-        fid_dict = dict()
+        object_id_list = []
 
         # ON THE DATA POD: ==========>>>>>>
 
@@ -286,13 +286,10 @@ class TestCorruptDataDetection:
                 # Create object
                 object_id_list.append(object_id)  # Store object_id for future delete
                 self.motr_obj.cp_cmd(
-                    b_size, cnt_c, object_id, layout, infile, node_pod, 0, di_g=True
+                    b_size, cnt_c, object_id, layout, infile, node_pod, 0
                 )  # client_num
 
-                # Todo: In progress
-                self.motr_obj.dump_m0trace_log(f"{node_pod}-trace_log.txt", node_pod)
-                fid_dict = self.motr_obj.read_m0trace_log(f"{node_pod}-trace_log.txt")
-                logger.debug(fid_dict)
+                logger.debug(f"object_id_list is: ###### {object_id_list}")
 
         logger.info(f"Copying the error injection script to cortx_motr_io containers in data pods.")
         pod_list = self.motr_obj.node_obj.get_all_pods(const.POD_NAME_PREFIX)
@@ -304,32 +301,53 @@ class TestCorruptDataDetection:
             if not result:
                 raise FileNotFoundError
 
-        # Todo - Pragam to write lib for extraction for metadata device - workaround with single CVG
-        # Todo: Optimize fetch_gob - list_emap from emap_fi_adapter
-        tfid_data_list, tfid_parity_list = self.motr_obj.fetch_gob(
-            "/dev/sdc", const.PARSE_SIZE, fid_dict
-        )
-        logger.info(f"tfid_parity_list = {tfid_parity_list}")
-
         # Run Emap on all objects
-        self.motr_corruption_obj.inject_checksum_corruption(tfid_data_list)
+        self.emap_adapter_obj.inject_checksum_corruption(object_id_list)
 
-        # Todo: need to restart m0tr container for taking emap effect?
+        # Todo
+        # self.motr_obj.dump_m0trace_log(filepath=, node=)
+        # tfid_dict = self.motr_obj.read_m0trace_log(filepath=)
 
-        # On the Client POD - cortx - hax container ==========>>>>>>
+        # Todo: need to restart m0tr container for taking emap effect
+
         for index, node_pod in enumerate(node_pod_dict):
             for b_size, (cnt_c, cnt_u), layout, offset in zip(
                 bsize_list, count_list, layout_ids, offsets
             ):
-                # Read objects after emap corruption
+                # On the Client POD - cortx - hax container ==========>>>>>>
+
+                # # Read objects after
                 self.motr_obj.cat_cmd(
                     b_size, cnt_c, object_id_list[index], layout, outfile, node_pod, 0, di_g=True
                 )
+
                 self.motr_obj.md5sum_cmd(infile, outfile, node_pod, flag=True)
+
                 self.motr_obj.unlink_cmd(object_id_list[index], layout, node_pod, 0)
 
-        logger.info("Stop: Verify emap corruption detection operation")
+            logger.info("Stop: Verify emap corruption detection operation")
+
         return True  # Todo: return status to be worked as per responses
+
+    def m0cat_md5sum_m0unlink(self, bsize_list, count_list, layout_ids, object_list, **kwargs):
+        """
+        Validate the corruption with md5sum after M0CAT and unlink the object
+        """
+        logger.info("STARTED: m0cat workflow")
+        infile = kwargs.get("infile", TEMP_PATH + "input")
+        outfile = kwargs.get("outfile", TEMP_PATH + "output")
+        client_num = kwargs.get("client_num", 1)
+        node_pod_dict = self.motr_obj.get_node_pod_dict()
+        for node in node_pod_dict:
+            for b_size, cnt_c, layout, obj_id in zip(
+                bsize_list, count_list, layout_ids, object_list
+            ):
+                self.motr_obj.cat_cmd(b_size, cnt_c, obj_id, layout, outfile, node, client_num)
+                # Verify the md5sum
+                self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
+                # Delete the object
+                self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
+                logger.info("Stop: Verify m0cat operation")
 
     @pytest.mark.tags("TEST-41739")
     @pytest.mark.motr_di
@@ -473,3 +491,68 @@ class TestCorruptDataDetection:
             self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
             logger.info("Successfully performed m0cp and corrupt the data block")
         logger.info(f"ENDED:{test_prefix} Test Parity corruption in degraded mode - aligned")
+
+    @pytest.mark.tags("TEST-45716")
+    @pytest.mark.motr_di
+    def test_data_block_corruption_one_by_one(self):
+        """
+        Corrupt data block one by one using emap script and
+         reading from object with m0cat should error.
+        -s 4096 -c 10 -o 1048583 /root/infile -L 1
+        -s 4096 -c 1 -o 1048583 /root/myfile -L 1 -u -O 0
+        -o 1048583 -s 4096 -c 10 -L 1 /root/dest_myfile
+        """
+        count_list = ["10"]
+        bsize_list = ["4K"]
+        layout_ids = ["1"]
+        logger.info("STARTED: m0cp, corrupt and m0cat workflow of " "each Data block one by one")
+        infile = TEMP_PATH + "input"
+        outfile = TEMP_PATH + "output"
+        node_pod_dict = self.motr_obj.get_node_pod_dict()
+        motr_client_num = self.motr_obj.get_number_of_motr_clients()
+        object_list = []
+        fid_resp = {}
+        for client_num in range(motr_client_num):
+            for node in node_pod_dict:
+                object_id = (
+                    str(self.system_random.randint(1, 1024 * 1024))
+                    + ":"
+                    + str(self.system_random.randint(1, 1024 * 1024))
+                )
+                for (
+                    b_size,
+                    cnt_c,
+                    layout,
+                ) in zip(bsize_list, count_list, layout_ids):
+                    self.motr_obj.dd_cmd(b_size, cnt_c, infile, node)
+                    # Add object id in a list
+                    object_list.append(object_id)
+                    self.motr_obj.cp_cmd(
+                        b_size, cnt_c, object_id, layout, infile, node, client_num, di_g=True
+                    )
+                    self.motr_obj.cat_cmd(
+                        b_size, cnt_c, object_id, layout, outfile, node, client_num
+                    )
+                filepath = self.motr_obj.dump_m0trace_log(f"{node}-trace_log.txt", node)
+                logger.debug("filepath is %s", filepath)
+                # Fetch the FID from m0trace log
+                fid_resp = self.motr_obj.read_m0trace_log(filepath)
+                logger.debug("fid_resp is %s", fid_resp)
+            metadata_path = self.emap_adapter_obj.get_metadata_device(
+                self.motr_obj.master_node_list[0]
+            )
+            logger.debug("metadata device is %s", metadata_path[0])
+            data_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(
+                metadata_path[0], fid=fid_resp
+            )
+            logger.debug("metadata device is %s", data_gob_id_resp)
+            # Corrupt the data block 1
+            for fid in data_gob_id_resp:
+                corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(fid)
+                if not corrupt_data_resp:
+                    logger.debug("Failed to corrupt the block %s", fid)
+                assert_utils.assert_true(corrupt_data_resp)
+            # Read the data using m0cp utility
+            self.m0cat_md5sum_m0unlink(
+                bsize_list, count_list, layout_ids, object_list, client_num=client_num
+            )

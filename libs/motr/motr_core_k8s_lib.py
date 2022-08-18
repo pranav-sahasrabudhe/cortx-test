@@ -104,17 +104,13 @@ class MotrCoreK8s:
             decode=True,
         )
         cluster_info = json.loads(response)
-
         if cluster_info is not None:
             self.profile_fid = cluster_info["profiles"][0]["fid"]
             nodes_data = cluster_info["nodes"]
             for node in nodes_data:
                 if "client" in node["name"]:
-                    nodename_full = node["name"]
-                    nodename = nodename_full.split(".")[0]
+                    nodename = node["name"].split(".")[0]
                     self.cortx_node_list.append(nodename)
-                    # Todo: Remove debug
-                    logging.debug(f"~~~~~ Added node {nodename} to the cortx_node_list ~~~~~")
                     node_dict[nodename] = {}
                     node_dict[nodename][common_const.MOTR_CLIENT] = []
                     for svc in node["svcs"]:
@@ -129,16 +125,9 @@ class MotrCoreK8s:
 
     def get_node_pod_dict(self):
         """
-        Returns all the node_pod and motr client pod names in dict format
+        Returns all the node and motr client pod names in dict format
         """
         node_pod_dict = self.get_pods_by_node()
-        return node_pod_dict
-
-    def get_node_data_pod_dict(self):
-        """
-        Returns all the node_pod and motr Data pod names in dict format
-        """
-        node_pod_dict = self.get_pods_by_node(prefix=common_const.MOTR_CONTAINER_PREFIX)
         return node_pod_dict
 
     def get_pods_by_node(
@@ -158,9 +147,9 @@ class MotrCoreK8s:
 
     def get_primary_cortx_node(self):
         """
-        To get the primary cortx node_pod name
+        To get the primary cortx node name
 
-        :returns: Primary(RC) node_pod name in the cluster
+        :returns: Primary(RC) node name in the cluster
         :rtype: str
         """
         motr_client_pod = self.node_obj.get_pod_name(
@@ -179,11 +168,11 @@ class MotrCoreK8s:
 
     def get_cortx_node_endpoints(self, cortx_node=None):
         """
-        To get the endpoints details of the cortx node_pod
+        To get the endpoints details of the cortx node
 
-        :param cortx_node: Name of the cortx node_pod
+        :param cortx_node: Name of the cortx node
         :type: str
-        :returns: Dict of a cortx node_pod containing the endpoints details
+        :returns: Dict of a cortx node containing the endpoints details
         :rtype: dict
         """
         if cortx_node:
@@ -198,8 +187,8 @@ class MotrCoreK8s:
 
     def get_number_of_motr_clients(self):
         """
-        To get the number of motr_clients in a node_pod
-        :returns: Number of motr_clients present in given node_pod
+        To get the number of motr_clients in a node
+        :returns: Number of motr_clients present in given node
         :rtype: integer
         """
         return len(self.node_dict[list(self.node_pod_dict.keys())[0]]["motr_client"])
@@ -226,7 +215,7 @@ class MotrCoreK8s:
         """
         To run the m0crate utility on specified cortx_node
         param: local_file_path: Absolute workload file(yaml) path on the client
-        param: remote_file_path: Absolute workload file(yaml) path on the master node_pod
+        param: remote_file_path: Absolute workload file(yaml) path on the master node
         param: cortx_node: Node where the m0crate utility will run
         """
         pod_node = self.get_node_pod_dict()[cortx_node]
@@ -263,6 +252,7 @@ class MotrCoreK8s:
     def dd_cmd(self, b_size, count, file, node):
         """
         DD command for creating new file
+
         :b_size: Block size
         :count: Block count
         :file: Output file name
@@ -283,37 +273,6 @@ class MotrCoreK8s:
             "ERROR" or "Error", resp, f'"{cmd}" Failed, Please check the log'
         )
 
-    def copy_file_to_remote_container(self, node_pod):
-        """
-        Command for copying file to container
-        :node_pod: on which node_pod file needs to be copied
-        """
-        pod_list = self.node_obj.get_all_pods(common_const.POD_NAME_PREFIX)
-        log.debug("pod list is %s", pod_list)
-        try:
-            # Todo: remove debug
-            log.debug("Copying emap file to remote container")
-
-            cmd = common_cmd.HA_COPY_CMD.format(
-                common_const.MOTR_DI_ERR_INJ_LOCAL_PATH,
-                node_pod,
-                common_const.MOTR_DI_ERR_INJ_SCRIPT_PATH,
-            )  # nosec
-            log.info("Copying file to remote container")
-            # Todo remove debug:
-            log.debug("Debug: >>>> Copied emap script >>>>")
-            self.node_obj.execute_cmd(cmd)
-        except IOError as error:
-            log.exception(
-                "Failed to copy %s inside data pod %s due to error: %s",
-                common_const.MOTR_DI_ERR_INJ_LOCAL_PATH,
-                node_pod,
-                error,
-            )
-            return False
-        log.info("Remote file/script copy successful")
-        return True
-
     # pylint: disable=too-many-arguments
     def cp_cmd(self, b_size, count, obj, layout, file, node, client_num=None, di_g=False):
         """
@@ -324,7 +283,7 @@ class MotrCoreK8s:
         :obj: Object ID
         :layout: Layout ID
         :file: Output file name
-        :node_pod: on which node_pod m0cp cmd need to perform
+        :node: on which node m0cp cmd need to perform
         :client_num: perform operation on motr_client
         :di_g: DI mode flag
         """
@@ -378,7 +337,7 @@ class MotrCoreK8s:
         :obj: Object ID
         :layout: Layout ID
         :file: Output file name
-        :node_pod: on which node_pod m0cp cmd need to perform
+        :node: on which node m0cp cmd need to perform
         :client_num: perform operation on motr_client
         """
         b_size = kwargs.get("b_size")
@@ -386,7 +345,7 @@ class MotrCoreK8s:
         obj = kwargs.get("obj")
         layout = kwargs.get("layout")
         file = kwargs.get("file")
-        node = kwargs.get("node_pod")
+        node = kwargs.get("node")
         offset = kwargs.get("offset")
         client_num = kwargs.get("client_num", None)
         if client_num is None:
@@ -419,7 +378,7 @@ class MotrCoreK8s:
         )
 
     # pylint: disable=too-many-arguments
-    def cat_cmd(self, b_size, count, obj, layout, file, node, client_num=None, di_g=False):
+    def cat_cmd(self, b_size, count, obj, layout, file, node, client_num=None):
         """
         M0CAT command creation
 
@@ -428,36 +387,23 @@ class MotrCoreK8s:
         :obj: Object ID
         :layout: Layout ID
         :file: Output file name
-        :node_pod: on which node_pod m0cp cmd need to perform
+        :node: on which node m0cp cmd need to perform
         :client_num: perform operation on motr_client
         """
         if client_num is None:
             client_num = 0
         node_dict = self.get_cortx_node_endpoints(node)
-        if di_g:
-            cmd = common_cmd.M0CAT_G.format(
-                node_dict[common_const.MOTR_CLIENT][client_num]["ep"],
-                node_dict["hax_ep"],
-                node_dict[common_const.MOTR_CLIENT][client_num]["fid"],
-                self.profile_fid,
-                b_size.lower(),
-                count,
-                obj,
-                layout,
-                file,
-            )
-        else:
-            cmd = common_cmd.M0CAT.format(
-                node_dict[common_const.MOTR_CLIENT][client_num]["ep"],
-                node_dict["hax_ep"],
-                node_dict[common_const.MOTR_CLIENT][client_num]["fid"],
-                self.profile_fid,
-                b_size.lower(),
-                count,
-                obj,
-                layout,
-                file,
-            )
+        cmd = common_cmd.M0CAT.format(
+            node_dict[common_const.MOTR_CLIENT][client_num]["ep"],
+            node_dict["hax_ep"],
+            node_dict[common_const.MOTR_CLIENT][client_num]["fid"],
+            self.profile_fid,
+            b_size.lower(),
+            count,
+            obj,
+            layout,
+            file,
+        )
         resp = self.node_obj.send_k8s_cmd(
             operation="exec",
             pod=self.node_pod_dict[node],
@@ -478,7 +424,7 @@ class MotrCoreK8s:
 
         :obj: Object ID
         :layout: Layout ID
-        :node_pod: on which node_pod m0cp cmd need to perform
+        :node: on which node m0cp cmd need to perform
         :client_num: perform operation on motr_client
         """
         if client_num is None:
@@ -512,7 +458,7 @@ class MotrCoreK8s:
 
         :file1: first file
         :file2: second file
-        :node_pod: compare files on which node_pod
+        :node: compare files on which node
         """
         diff_utils_install = common_cmd.CMD_INSTALL_TOOL.format("diffutils") + " -y"
         cmd = common_cmd.DIFF.format(file1, file2)
@@ -537,7 +483,7 @@ class MotrCoreK8s:
 
         :file1: first file
         :file2: second file
-        :node_pod: compare files on which node_pod
+        :node: compare files on which node
         """
         flag = kwargs.get("flag", None)
         cmd = common_cmd.MD5SUM.format(file1, file2)
@@ -564,7 +510,7 @@ class MotrCoreK8s:
         Get MD5SUM of a file from hax container
 
         :param file: Absolute Path of the file inside hax container
-        :param node: Cortx node_pod where the file is present
+        :param node: Cortx node where the file is present
         :returns: md5sum of the file
         :rtype: str
         """
@@ -671,7 +617,7 @@ class MotrCoreK8s:
         M0KV command creation
 
         :param: Input Parameters
-        :node_pod: on which node_pod m0cp cmd need to perform
+        :node: on which node m0cp cmd need to perform
         :client_num: perform operation on motr_client
         """
         if client_num is None:
@@ -741,9 +687,9 @@ class MotrCoreK8s:
 
     def update_m0crate_config(self, config_file, node):
         """
-        This will modify the m0crate workload config yaml with the node_pod details
+        This will modify the m0crate workload config yaml with the node details
         param: confile_file: Path of m0crate workload config yaml
-        param: node_pod: Cortx node_pod on which m0crate utility to be executed
+        param: node: Cortx node on which m0crate utility to be executed
         """
         m0cfg = config_utils.read_yaml(config_file)[1]
         node_enpts = self.get_cortx_node_endpoints(node)
@@ -768,8 +714,8 @@ class MotrCoreK8s:
         delete_objs=True,
     ):
         """
-        Run m0cp, m0cat and m0unlink on a node_pod for all the motr clients and returns the objects
-        :param: str node_pod: Cortx node_pod on which utilities to be executed
+        Run m0cp, m0cat and m0unlink on a node for all the motr clients and returns the objects
+        :param: str node: Cortx node on which utilities to be executed
         :param: dict bsize_layout_map: mapping of block size and layout for IOs to run
         :param: list block_count: List containing the integer values. If block count is 1,
                 then size of object file will vary from 4K to 32M,
@@ -827,14 +773,14 @@ class MotrCoreK8s:
         return_dict=None,
     ):
         """
-        :param: str node_pod: Cortx node_pod on which utilities to be executed
+        :param: str node: Cortx node on which utilities to be executed
         :param: dict bsize_layout_map: mapping of block size and layout for IOs to run
         :param: list block_count: List containing the integer values. If block count is 1,
                 then size of object file will vary from 4K to 32M,
                 i.e multiple of supported object block sizes
         :param: bool run_m0cat: if True, will also run m0cat and compares the md5sum
         :param: bool delete_objs: if True, will delete the created objects
-        :param: dict return_dict: contains the return value from for node_pod
+        :param: dict return_dict: contains the return value from for node
         """
         if return_dict is None:
             return_dict = {}
@@ -852,9 +798,9 @@ class MotrCoreK8s:
         """
         Run motr m0crate in parallel using this function with the help of multiprocessing
         :param: str local_file_path: Absolute workload file(yaml) path on the client
-        :param: str remote_file_path: Absolute workload file(yaml) path on the master node_pod
+        :param: str remote_file_path: Absolute workload file(yaml) path on the master node
         :param: str cortx_node: Node where the m0crate utility will run
-        :param: dict return_dict: contains the return value from for node_pod
+        :param: dict return_dict: contains the return value from for node
         """
         if return_dict is None:
             return_dict = {}
@@ -872,9 +818,10 @@ class MotrCoreK8s:
                 if isinstance(conn, LogicalNode):
                     conn.disconnect()
 
-    def dump_m0trace_log(self, dest_filepath, node):
-        """This method is used to dump the m0trace logs on all the data pods to the master node,
-        dest_filepath: m0trace log path
+    def dump_m0trace_log(self, filepath, node):
+        """This method is used to parse the m0trace logs on all the data pods,
+        filepath: m0trace log path
+        node: client pod
         """
         list_trace = common_cmd.LIST_M0TRACE
         resp = self.node_obj.send_k8s_cmd(
@@ -886,7 +833,7 @@ class MotrCoreK8s:
         )
         latest_trace_file = resp.split("\n")[-1]
         log.debug("Resp: %s", latest_trace_file)
-        cmd = Template(common_cmd.M0TRACE).substitute(trace=latest_trace_file, file=dest_filepath)
+        cmd = Template(common_cmd.M0TRACE).substitute(trace=latest_trace_file, file=filepath)
         resp = self.node_obj.send_k8s_cmd(
             operation="exec",
             pod=str(self.node_pod_dict[node]),
@@ -895,7 +842,7 @@ class MotrCoreK8s:
             decode=True,
         )
         log.info("Resp of trace: %s", resp)
-        return resp, dest_filepath
+        return filepath
 
     def read_m0trace_log(self, filepath):
         """
@@ -935,14 +882,10 @@ class MotrCoreK8s:
         return checksum_dict
 
     # pylint: disable=too-many-locals
-    def fetch_gob(self, metadata_device, parse_size, fid: dict) -> list:
+    def fetch_gob(self, metadata_device, parse_size, fid: dict):
         """
         This method helps to verify the gob id by running emap_list using error_injection script
         it returns the corresponding data,parity block checksum id
-        :param metadata_device - medata device e.g. /dev/sdc
-        :Param parse_size - Size of metadata to be parsed e.g. 10MB = 10485760
-        :param fid - dict of data and parity with their target FID
-        :return - 2 Lists of data cksum and parity cksum
         """
         pod_list = self.node_obj.get_all_pods(common_const.POD_NAME_PREFIX)
         log.debug("pod list is %s", pod_list)
