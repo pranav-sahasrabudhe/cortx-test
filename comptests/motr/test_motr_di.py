@@ -54,8 +54,7 @@ from builtins import list
 
 import pytest
 
-from commons.utils import assert_utils
-from config import CMN_CFG
+from commons.helpers.pods_helper import LogicalNode
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
 from libs.motr.emap_fi_adapter import MotrCorruptionAdapter
