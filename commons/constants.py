@@ -157,9 +157,12 @@ CONF_SYSFS_BASE_PATH = "SYSTEM_INFORMATION>sysfs_base_path"
 CONF_RAID_INTEGRITY = "RAIDINTEGRITYSENSOR>retry_interval"
 AUTHSERVER_CONFIG = "/opt/seagate/cortx/auth/resources/authserver.properties"
 LOCAL_COPY_PATH = tempfile.gettempdir() + "/authserver.properties"
+CLUSTER_YAML = "cluster.yaml"
 LOCAL_CONF_PATH = tempfile.gettempdir() + "/cluster.conf"
+LOCAL_CLS_YAML_PATH = tempfile.gettempdir() + "/" + CLUSTER_YAML
 LOCAL_SOLUTION_PATH = tempfile.gettempdir() + "/solution.yaml"
 CLUSTER_CONF_PATH = "/etc/cortx/cluster.conf"
+CLUSTER_YAML_PATH = "/etc/cortx/solution/cluster.yaml"
 CSM_CONF_PATH = "/etc/cortx/csm/csm.conf"
 CSM_COPY_PATH = tempfile.gettempdir() + "/csm.conf"
 CLUSTER_COPY_PATH = tempfile.gettempdir() + "/cluster.conf"
@@ -211,9 +214,7 @@ class Rest:
     S3_ACCOUNTS = "s3_accounts"
     ACC_NAME = "account_name"
     ACC_EMAIL = "account_email"
-    SECRET_KEY = "secret_key"
     IAMUSERS = "iam_users"
-    ACCESS_KEY = "access_key"
     USER_NAME = "user_name"
     USER_ID = "user_id"
     IAM_USER = "test_iam_user"
@@ -518,6 +519,7 @@ SB_POD_PREFIX_AND_COMPONENT_LIST = {
     HA_POD_NAME_PREFIX: ["utils"],
 }
 SB_EXTRACTED_PATH = "/etc/cortx/log/"
+SB_SIZE_MB = 500
 
 # K8s env
 K8S_SCRIPTS_PATH = "/root/deploy-scripts/k8_cortx_cloud/"
