@@ -298,7 +298,7 @@ class MotrCorruptionAdapter(InjectCorruption):
         return metadata_device
 
     @staticmethod
-    def restart_motr_container(self, index):
+    def restart_motr_container(index):
         """
         Restart Motr container of index and check if it has already restarted.
         :param index:
