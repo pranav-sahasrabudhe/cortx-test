@@ -20,12 +20,14 @@
 """Failure Injection adapter which Handles motr emap, checksum, data corruption.
 """
 import logging
-import os
+import yaml
 import secrets
 import time
 from abc import ABC, abstractmethod
 from string import Template
 from typing import AnyStr
+
+
 from commons.constants import POD_NAME_PREFIX
 from commons.constants import MOTR_CONTAINER_PREFIX
 from commons.constants import PROD_FAMILY_LC as LC
