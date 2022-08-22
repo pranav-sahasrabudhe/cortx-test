@@ -89,6 +89,7 @@ class EmapCommand:
             # /etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a'
             option = "-m " + str(self.opts.get("metadata_db_path"))
             self.add_option(option)
+
         if self.opts.get("parse_size"):
             # File Size to parse from start offset.
             option = "-parse_size " + str(self.opts.get("parse_size"))
@@ -263,9 +264,9 @@ class MotrCorruptionAdapter(InjectCorruption):
         return data_checksum_list, parity_checksum_list
 
     @staticmethod
-    def get_metadata_devive(master_node_obj: LogicalNode):
+    def get_metadata_device(master_node_obj: LogicalNode):
         """
-        Locate metadata shard.
+        Locate metadata device.
         :param master_node_obj: master node obj
         :return: COB ID in FID format to be corrupted
         """
@@ -337,6 +338,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                 )
                 # motr_instances = len(motr_containers)  # Todo here and also check for copy to 002
                 # select 1st motr pod
+                metadata_device = self.get_metadata_device(master_node_obj=self.master_node_list[0])
                 logging.debug(f"pod_name = {pod_name}")
                 if pod_name == "cortx-data-g0-0":
                     logging.debug(f"Inside.......... pod_name = {pod_name}")
@@ -346,19 +348,21 @@ class MotrCorruptionAdapter(InjectCorruption):
                         try:
                             # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
                             # -- (False, 'metadata path or fid cannot be None')
-                            resp = self.master_node_list[0].send_k8s_cmd(
-                                operation="exec",
-                                pod=pod_name,
-                                namespace=NAMESPACE,
-                                command_suffix=f"-c {motr_containers[0]} -- "
-                                f"{self.build_emap_command(oid, fault_type)}",
-                                decode=True,
-                            )
-                            logging.debug(f"resp = {resp}")
-                            if resp:
-                                success = True
-                                break
-                            retries -= 1
+                            emap_cmd = self.build_emap_command(oid, selected_shard=metadata_device)
+                            if emap_cmd:
+                                resp = self.master_node_list[0].send_k8s_cmd(
+                                    operation="exec",
+                                    pod=pod_name,
+                                    namespace=NAMESPACE,
+                                    command_suffix=f"-c {motr_containers[0]} -- "
+                                    f"{emap_cmd}",
+                                    decode=True,
+                                )
+                                logging.debug(f"resp = {resp}")
+                                if resp:
+                                    success = True
+                                    break
+                                retries -= 1
                         except IOError as ex:
                             LOGGER.exception("remaining retrying: %s")
                             retries -= 1
