@@ -307,19 +307,13 @@ class MotrCorruptionAdapter(InjectCorruption):
     @staticmethod
     def build_emap_command(fid=None, selected_shard=None):
         # cob_id = self.get_object_cob_id(self.oid, dtype=ftype)
+        logging.debug(f"fid list = {fid}, meta_dev={selected_shard}")
         if fid or selected_shard is None:
             return False, "metadata path or fid cannot be None"
         kwargs = dict(
             corrupt_emap=fid, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
         )
         cmd = EmapCommandBuilder.build(**kwargs)
-        # emap_bldr = list_emap="list_emap",
-        #     corrupt_emap=cob_id,
-        #     parse_size=10485760,
-        #     emap_count=1,
-        #     metadata_db_path=selected_shard,
-        # )
-        # cmd = EmapCommandBuilder.build(emap_bldr, **kwargs)
         return cmd
 
     def inject_fault_k8s(self, oid: list):
