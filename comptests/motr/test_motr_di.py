@@ -54,7 +54,7 @@ from builtins import list
 
 import pytest
 
-from commons import const
+from commons.constants import const
 from commons.helpers.pods_helper import LogicalNode
 from libs.motr import TEMP_PATH
 from libs.motr.motr_core_k8s_lib import MotrCoreK8s
