@@ -80,18 +80,15 @@ class EmapCommand:
             # Cob FID of object is specified for corrupt_emap
             option = "-corrupt_emap " + str(self.opts.get("corrupt_emap"))
             self.add_option(option)
-
         if self.opts.get("emap_count"):
             # number of checksum corruption instances for parity or data
             option = "-e " + str(self.opts.get("emap_count"))
             self.add_option(option)
-
         if self.opts.get("metadata_db_path"):
             # Metadata DB path within each motr fid dir as shown below.
             # /etc/cortx/motr/m0d-0x7200000000000001\:0x32/db/o/100000000000000:2a'
             option = "-m " + str(self.opts.get("metadata_db_path"))
             self.add_option(option)
-
         if self.opts.get("parse_size"):
             # File Size to parse from start offset.
             option = "-parse_size " + str(self.opts.get("parse_size"))
@@ -324,11 +321,10 @@ class MotrCorruptionAdapter(InjectCorruption):
         # cmd = EmapCommandBuilder.build(emap_bldr, **kwargs)
         return cmd
 
-    def inject_fault_k8s(self, oid: list, fault_type: int):
+    def inject_fault_k8s(self, oid: list):
         """
         Inject fault of type checksum or parity.
         :param oid object id list
-        :param fault_type: checksum or parity
         :return boolean :true :if successful
                           false: if error
         """
@@ -348,6 +344,8 @@ class MotrCorruptionAdapter(InjectCorruption):
                     success = False
                     while retries > 0:
                         try:
+                            # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
+                            # -- (False, 'metadata path or fid cannot be None')
                             resp = self.master_node_list[0].send_k8s_cmd(
                                 operation="exec",
                                 pod=pod_name,
@@ -376,11 +374,11 @@ class MotrCorruptionAdapter(InjectCorruption):
 
     def inject_checksum_corruption(self, oid: list):
         """Injects data checksum error by providing the DU FID."""
-        return self.inject_fault_k8s(oid, FT_CHKSUM)
+        return self.inject_fault_k8s(oid)
 
     def inject_parity_corruption(self, oid: list):
         """Injects parity checksum error by providing the Parity FID."""
-        return self.inject_fault_k8s(oid, FT_PARITY)
+        return self.inject_fault_k8s(oid)
 
     def inject_metadata_corruption(self, oid: list):
         """Not supported."""
