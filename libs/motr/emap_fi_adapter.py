@@ -332,7 +332,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                 )
                 # motr_instances = len(motr_containers)  # Todo here and also check for copy to 002
                 # select 1st motr pod
-                metadata_device = self.get_metadata_device(master_node_obj=self.master_node_list[0])
+                # metadata_device = self.get_metadata_device(master_node_obj=self.master_node_list[0])
                 logging.debug(f"pod_name = {pod_name}")
                 if pod_name == "cortx-data-g0-0":
                     logging.debug(f"Inside.......... pod_name = {pod_name}")

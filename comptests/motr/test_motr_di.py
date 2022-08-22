@@ -559,7 +559,7 @@ class TestCorruptDataDetection:
                 # Fetch the FID from m0trace log
                 fid_resp = self.motr_obj.read_m0trace_log(filepath)
                 logger.debug("fid_resp is %s", fid_resp)
-            metadata_path = self.emap_adapter_obj.get_metadata_devive(
+            metadata_path = self.emap_adapter_obj.get_metadata_device(
                 self.motr_obj.master_node_list[0]
             )
             logger.debug("metadata device is %s", metadata_path[0])
