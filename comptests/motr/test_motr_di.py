@@ -340,23 +340,25 @@ class TestCorruptDataDetection:
         """
         Validate the corruption with md5sum after M0CAT and unlink the object
         """
-        logger.info("STARTED: m0cat workflow")
+        logger.info("STARTED: m0cat_md5sum_m0unlink workflow")
         infile = kwargs.get("infile", TEMP_PATH + "input")
         outfile = kwargs.get("outfile", TEMP_PATH + "output")
-        client_num = kwargs.get("client_num", 1)
         node_pod_dict = self.motr_obj.get_node_pod_dict()
-        for node in node_pod_dict:
-            for b_size, cnt_c, cnt_u, layout, obj_id in zip(
-                bsize_list, count_list, layout_ids, object_list
-            ):
-                self.motr_obj.cat_cmd(
-                    b_size, cnt_c, obj_id, layout, outfile, node, client_num, di_g=True
-                )
-                # Verify the md5sum
-                self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
-                # Delete the object
-                self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
-                logger.info("Stop: Verify m0cat operation")
+        motr_client_num = self.motr_obj.get_number_of_motr_clients()
+        for client_num in range(motr_client_num):
+            for node, obj_id in zip(node_pod_dict, object_list):
+                for (
+                    b_size,
+                    cnt_c,
+                    layout,
+                ) in zip(bsize_list, count_list, layout_ids):
+                    self.motr_obj.cat_cmd(b_size, cnt_c, obj_id, layout, outfile, node, client_num)
+                    # Verify the md5sum
+                    self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
+                    # Delete the object
+                    self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
+                    object_list.pop()
+                logger.info("Stop: Verify m0cat_md5sum_m0unlink operation")
 
     @pytest.mark.skip(reason="Feature Unavailable")
     @pytest.mark.tags("TEST-41742")
