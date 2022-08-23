@@ -346,7 +346,7 @@ class TestCorruptDataDetection:
         client_num = kwargs.get("client_num", 1)
         node_pod_dict = self.motr_obj.get_node_pod_dict()
         for node in node_pod_dict:
-            for b_size, cnt_c, layout, obj_id in zip(
+            for b_size, cnt_c, cnt_u, layout, obj_id in zip(
                 bsize_list, count_list, layout_ids, object_list
             ):
                 self.motr_obj.cat_cmd(
