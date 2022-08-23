@@ -294,37 +294,33 @@ class TestCorruptDataDetection:
                 # Create object
                 object_id_list.append(object_id)  # Store object_id for future delete
                 self.motr_obj.cp_cmd(
-                    b_size, cnt_c, object_id, layout, infile, node_pod, 0
+                    b_size, cnt_c, object_id, layout, infile, node_pod, 0, di_g=True
                 )  # client_num
 
                 logger.debug(f"object_id_list is: ###### {object_id_list}")
-        # ====================
+            # ====================
             filepath = self.motr_obj.dump_m0trace_log(f"{node_pod}-trace_log.txt", node_pod)
             logger.debug("filepath is %s", filepath)
             # Fetch the FID from m0trace log
             fid_resp = self.motr_obj.read_m0trace_log(filepath)
             logger.debug("fid_resp is %s", fid_resp)
 
-        metadata_path = self.emap_adapter_obj.get_metadata_device(
-            self.motr_obj.master_node_list[0]
-        )
+        metadata_path = self.emap_adapter_obj.get_metadata_device(self.motr_obj.master_node_list[0])
         # ==============
         # Run Emap on all objects, Object id list determines the parity or data
         # self.emap_adapter_obj.inject_checksum_corruption(object_id_list)
-        data_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(
-            metadata_path[0], fid=fid_resp
-        )
+        data_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(metadata_path[0], fid=fid_resp)
         logger.debug("data gob id resp is %s", data_gob_id_resp)
         # ==============
         corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
-            data_gob_id_resp,
-            metadata_device=metadata_path[0])
+            data_gob_id_resp, metadata_device=metadata_path[0]
+        )
 
         # Todo: need to restart m0tr container for taking emap effect
 
         # Read the data using m0cp utility
         self.m0cat_md5sum_m0unlink(
-            bsize_list, count_list, layout_ids, object_id_list, client_num=0
+            bsize_list, count_list, layout_ids, object_id_list, client_num=0, outfile=outfile
         )
         return True  # Todo: return status to be worked as per responses
 
@@ -341,7 +337,9 @@ class TestCorruptDataDetection:
             for b_size, cnt_c, layout, obj_id in zip(
                 bsize_list, count_list, layout_ids, object_list
             ):
-                self.motr_obj.cat_cmd(b_size, cnt_c, obj_id, layout, outfile, node, client_num, di_g=True)
+                self.motr_obj.cat_cmd(
+                    b_size, cnt_c, obj_id, layout, outfile, node, client_num, di_g=True
+                )
                 # Verify the md5sum
                 self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
                 # Delete the object
@@ -565,8 +563,8 @@ class TestCorruptDataDetection:
             # Corrupt the data block 1
             for fid in data_gob_id_resp:
                 corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
-                    fid,
-                    metadata_device=metadata_path[0])
+                    fid, metadata_device=metadata_path[0]
+                )
                 if not corrupt_data_resp:
                     logger.debug("Failed to corrupt the block %s", fid)
                 assert_utils.assert_true(corrupt_data_resp)
