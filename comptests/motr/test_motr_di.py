@@ -252,10 +252,11 @@ class TestCorruptDataDetection:
         outfile = TEMP_PATH + "output"
         node_pod_dict = self.motr_obj.get_node_pod_dict()
         object_id_list = []
+        remote_script_path = const.CONTAINER_PATH
+        motr_container_name = f"{const.MOTR_CONTAINER_PREFIX}-001"
 
         # ON THE DATA POD: ==========>>>>>>
-
-        # Copy the emap script to controller node's root dir
+        # Copy the emap script to controller node's root dir for enabling further copy to container
         err_inj_script_path = str(MOTR_DI_ERR_INJ_LOCAL_PATH)
         copy_status, resp = self.motr_obj.master_node_list[0].copy_file_to_remote(
             err_inj_script_path, const.MOTR_DI_ERR_INJ_SCRIPT_PATH
@@ -265,9 +266,15 @@ class TestCorruptDataDetection:
         else:
             logger.debug(f"Error Injection Script File already exists...")
 
-        remote_script_path = const.CONTAINER_PATH
-        motr_container_name = f"{const.MOTR_CONTAINER_PREFIX}-001"
-
+        logger.info(f"Copying the error injection script to cortx_motr_io containers in data pods.")
+        pod_list = self.motr_obj.node_obj.get_all_pods(const.POD_NAME_PREFIX)
+        for pod in pod_list:
+            result = self.motr_obj.master_node_list[0].copy_file_to_container(
+                const.MOTR_DI_ERR_INJ_SCRIPT_PATH, pod, remote_script_path, motr_container_name
+            )
+            if not result:
+                raise FileNotFoundError
+        # ================
         # For all pods in the system
         for node_pod in node_pod_dict:
 
@@ -278,11 +285,11 @@ class TestCorruptDataDetection:
                 + str(self.system_random.randint(1, 1024 * 1024))
             )
 
+            # On the Client POD - cortx - hax container ==========>>>>>>
             for b_size, (cnt_c, cnt_u), layout, offset in zip(
                 bsize_list, count_list, layout_ids, offsets
             ):
-                # On the Client POD - cortx - hax container ==========>>>>>>
-                # Create file (object) with dd
+                # Create file (object) with dd on all client pods
                 self.motr_obj.dd_cmd(b_size, cnt_c, infile, node_pod)
                 # Create object
                 object_id_list.append(object_id)  # Store object_id for future delete
@@ -292,18 +299,24 @@ class TestCorruptDataDetection:
 
                 logger.debug(f"object_id_list is: ###### {object_id_list}")
 
-        logger.info(f"Copying the error injection script to cortx_motr_io containers in data pods.")
-        pod_list = self.motr_obj.node_obj.get_all_pods(const.POD_NAME_PREFIX)
-        for pod in pod_list:
-            result = self.motr_obj.master_node_list[0].copy_file_to_container(
-                const.MOTR_DI_ERR_INJ_SCRIPT_PATH, pod, remote_script_path, motr_container_name
-            )
-            if not result:
-                raise FileNotFoundError
 
-        # Run Emap on all objects
-        self.emap_adapter_obj.inject_checksum_corruption(object_id_list)
 
+        # ==============
+            filepath = self.motr_obj.dump_m0trace_log(f"{node}-trace_log.txt", node)
+            logger.debug("filepath is %s", filepath)
+            # Fetch the FID from m0trace log
+            fid_resp = self.motr_obj.read_m0trace_log(filepath)
+            logger.debug("fid_resp is %s", fid_resp)
+
+        metadata_path = self.emap_adapter_obj.get_metadata_device(
+            self.motr_obj.master_node_list[0]
+        )
+        # ==============
+        # Run Emap on all objects, Object id list determines the parity or data
+        # self.emap_adapter_obj.inject_checksum_corruption(object_id_list)
+        corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
+            object_id_list,
+            metadata_device=metadata_path[0])
         # Todo
         # self.motr_obj.dump_m0trace_log(filepath=, node=)
         # tfid_dict = self.motr_obj.read_m0trace_log(filepath=)
@@ -553,9 +566,6 @@ class TestCorruptDataDetection:
                     self.motr_obj.cp_cmd(
                         b_size, cnt_c, object_id, layout, infile, node, client_num, di_g=True
                     )
-                    # self.motr_obj.cat_cmd(
-                    #     b_size, cnt_c, object_id, layout, outfile, node, client_num
-                    # )
                 filepath = self.motr_obj.dump_m0trace_log(f"{node}-trace_log.txt", node)
                 logger.debug("filepath is %s", filepath)
                 # Fetch the FID from m0trace log
@@ -568,7 +578,7 @@ class TestCorruptDataDetection:
             data_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(
                 metadata_path[0], fid=fid_resp
             )
-            logger.debug("metadata device is %s", data_gob_id_resp)
+            logger.debug("data gob id resp is %s", data_gob_id_resp)
             # Corrupt the data block 1
             for fid in data_gob_id_resp:
                 corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
