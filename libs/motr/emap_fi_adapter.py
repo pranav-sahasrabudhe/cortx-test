@@ -305,21 +305,22 @@ class MotrCorruptionAdapter(InjectCorruption):
         return False
 
     @staticmethod
-    def build_emap_command(fid=None, selected_shard=None):
+    def build_emap_command(fid=None, selected_meta_dev=None):
         # cob_id = self.get_object_cob_id(self.oid, dtype=ftype)
-        logging.debug(f"fid list = {fid}, meta_dev={selected_shard}")
-        if fid or selected_shard is None:
+        logging.debug(f"fid list = {fid}, meta_dev={selected_meta_dev}")
+        if fid or selected_meta_dev is None:
             return False, "metadata path or fid cannot be None"
         kwargs = dict(
-            corrupt_emap=fid, parse_size=10485760, emap_count=1, metadata_db_path=selected_shard
+            corrupt_emap=fid, parse_size=10485760, emap_count=1, metadata_db_path=selected_meta_dev
         )
         cmd = EmapCommandBuilder.build(**kwargs)
         return cmd
 
-    def inject_fault_k8s(self, oid: list):
+    def inject_fault_k8s(self, oid: list, metadata_device: str):
         """
         Inject fault of type checksum or parity.
         :param oid object id list
+        :param metadata_device - metadata device path
         :return boolean :true :if successful
                           false: if error
         """
@@ -342,7 +343,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                         try:
                             # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
                             # -- (False, 'metadata path or fid cannot be None')
-                            emap_cmd = self.build_emap_command(oid, selected_shard=metadata_device)
+                            emap_cmd = self.build_emap_command(oid, selected_meta_dev=metadata_device)
                             logging.debug(f"emap_cmd = {emap_cmd}")
                             if emap_cmd:
                                 resp = self.master_node_list[0].send_k8s_cmd(

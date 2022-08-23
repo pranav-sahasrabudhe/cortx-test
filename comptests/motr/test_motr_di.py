@@ -298,7 +298,6 @@ class TestCorruptDataDetection:
             result = self.motr_obj.master_node_list[0].copy_file_to_container(
                 const.MOTR_DI_ERR_INJ_SCRIPT_PATH, pod, remote_script_path, motr_container_name
             )
-
             if not result:
                 raise FileNotFoundError
 
@@ -310,24 +309,27 @@ class TestCorruptDataDetection:
         # tfid_dict = self.motr_obj.read_m0trace_log(filepath=)
 
         # Todo: need to restart m0tr container for taking emap effect
+        # for index, node_pod in enumerate(node_pod_dict):
+        #     for b_size, (cnt_c, cnt_u), layout, offset in zip(
+        #         bsize_list, count_list, layout_ids, offsets
+        #     ):
+        #         # On the Client POD - cortx - hax container ==========>>>>>>
+        #
+        #         # # Read objects after
+        #         self.motr_obj.cat_cmd(
+        #             b_size, cnt_c, object_id_list[index], layout, outfile, node_pod, 0, di_g=True
+        #         )
+        #
+        #         self.motr_obj.md5sum_cmd(infile, outfile, node_pod, flag=True)
+        #
+        #         self.motr_obj.unlink_cmd(object_id_list[index], layout, node_pod, 0)
+        #
+        #     logger.info("Stop: Verify emap corruption detection operation")
 
-        for index, node_pod in enumerate(node_pod_dict):
-            for b_size, (cnt_c, cnt_u), layout, offset in zip(
-                bsize_list, count_list, layout_ids, offsets
-            ):
-                # On the Client POD - cortx - hax container ==========>>>>>>
-
-                # # Read objects after
-                self.motr_obj.cat_cmd(
-                    b_size, cnt_c, object_id_list[index], layout, outfile, node_pod, 0, di_g=True
-                )
-
-                self.motr_obj.md5sum_cmd(infile, outfile, node_pod, flag=True)
-
-                self.motr_obj.unlink_cmd(object_id_list[index], layout, node_pod, 0)
-
-            logger.info("Stop: Verify emap corruption detection operation")
-
+        # Read the data using m0cp utility
+        self.m0cat_md5sum_m0unlink(
+            bsize_list, count_list, layout_ids, object_id_list, client_num=0
+        )
         return True  # Todo: return status to be worked as per responses
 
     def m0cat_md5sum_m0unlink(self, bsize_list, count_list, layout_ids, object_list, **kwargs):
@@ -343,7 +345,7 @@ class TestCorruptDataDetection:
             for b_size, cnt_c, layout, obj_id in zip(
                 bsize_list, count_list, layout_ids, object_list
             ):
-                self.motr_obj.cat_cmd(b_size, cnt_c, obj_id, layout, outfile, node, client_num)
+                self.motr_obj.cat_cmd(b_size, cnt_c, obj_id, layout, outfile, node, client_num, di_g=True)
                 # Verify the md5sum
                 self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
                 # Delete the object
@@ -551,9 +553,9 @@ class TestCorruptDataDetection:
                     self.motr_obj.cp_cmd(
                         b_size, cnt_c, object_id, layout, infile, node, client_num, di_g=True
                     )
-                    self.motr_obj.cat_cmd(
-                        b_size, cnt_c, object_id, layout, outfile, node, client_num
-                    )
+                    # self.motr_obj.cat_cmd(
+                    #     b_size, cnt_c, object_id, layout, outfile, node, client_num
+                    # )
                 filepath = self.motr_obj.dump_m0trace_log(f"{node}-trace_log.txt", node)
                 logger.debug("filepath is %s", filepath)
                 # Fetch the FID from m0trace log
@@ -569,7 +571,9 @@ class TestCorruptDataDetection:
             logger.debug("metadata device is %s", data_gob_id_resp)
             # Corrupt the data block 1
             for fid in data_gob_id_resp:
-                corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(fid)
+                corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
+                    fid,
+                    metadata_device=metadata_path[0])
                 if not corrupt_data_resp:
                     logger.debug("Failed to corrupt the block %s", fid)
                 assert_utils.assert_true(corrupt_data_resp)
