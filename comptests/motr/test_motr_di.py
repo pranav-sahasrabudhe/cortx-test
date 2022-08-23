@@ -320,8 +320,9 @@ class TestCorruptDataDetection:
             data_gob_id_resp, metadata_device=metadata_path[0]
         )
 
-        # Todo: need to restart m0tr container for taking emap effect
+        # Restart m0d process so that emap can read latest changes
         self.dtm_obj.process_restart_with_delay(
+            master_node=self.master_node_list[0],
             health_obj=self.health_obj,
             process=const.PID_WATCH_LIST[0],
             pod_prefix=const.POD_NAME_PREFIX,

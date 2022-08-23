@@ -305,9 +305,9 @@ class MotrCorruptionAdapter(InjectCorruption):
         return False
 
     @staticmethod
-    def build_emap_command(fid=None, selected_meta_dev=None):
+    def build_emap_command(fid: str, selected_meta_dev=None):
         # cob_id = self.get_object_cob_id(self.oid, dtype=ftype)
-        logging.debug(f"fid list = {fid}, meta_dev={selected_meta_dev}")
+        logging.debug(f"fid str = {fid}, meta_dev={selected_meta_dev}")
         if fid or selected_meta_dev is None:
             return False, "metadata path or fid cannot be None"
         kwargs = dict(
@@ -333,7 +333,6 @@ class MotrCorruptionAdapter(InjectCorruption):
                 )
                 # motr_instances = len(motr_containers)  # Todo here and also check for copy to 002
                 # select 1st motr pod
-                # metadata_device = self.get_metadata_device(master_node_obj=self.master_node_list[0])
                 logging.debug(f"pod_name = {pod_name}")
                 if pod_name == "cortx-data-g0-0":
                     logging.debug(f"Inside.......... pod_name = {pod_name}")
@@ -343,15 +342,16 @@ class MotrCorruptionAdapter(InjectCorruption):
                         try:
                             # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
                             # -- (False, 'metadata path or fid cannot be None')
-                            emap_cmd = self.build_emap_command(oid, selected_meta_dev=metadata_device)
+                            emap_cmd = self.build_emap_command(
+                                oid[index], selected_meta_dev=metadata_device
+                            )
                             logging.debug(f"emap_cmd = {emap_cmd}")
                             if emap_cmd:
                                 resp = self.master_node_list[0].send_k8s_cmd(
                                     operation="exec",
                                     pod=pod_name,
                                     namespace=NAMESPACE,
-                                    command_suffix=f"-c {motr_containers[0]} -- "
-                                    f"{emap_cmd}",
+                                    command_suffix=f"-c {motr_containers[0]} -- " f"{emap_cmd}",
                                     decode=True,
                                 )
                                 logging.debug(f"resp = {resp}")
