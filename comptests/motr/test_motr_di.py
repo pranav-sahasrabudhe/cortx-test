@@ -254,6 +254,7 @@ class TestCorruptDataDetection:
         object_id_list = []
         remote_script_path = const.CONTAINER_PATH
         motr_container_name = f"{const.MOTR_CONTAINER_PREFIX}-001"
+        fid_resp = {}
 
         # ON THE DATA POD: ==========>>>>>>
         # Copy the emap script to controller node's root dir for enabling further copy to container
@@ -310,27 +311,16 @@ class TestCorruptDataDetection:
         # ==============
         # Run Emap on all objects, Object id list determines the parity or data
         # self.emap_adapter_obj.inject_checksum_corruption(object_id_list)
+        data_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(
+            metadata_path[0], fid=fid_resp
+        )
+        logger.debug("data gob id resp is %s", data_gob_id_resp)
+        # ==============
         corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
-            object_id_list,
+            data_gob_id_resp,
             metadata_device=metadata_path[0])
 
         # Todo: need to restart m0tr container for taking emap effect
-        # for index, node_pod in enumerate(node_pod_dict):
-        #     for b_size, (cnt_c, cnt_u), layout, offset in zip(
-        #         bsize_list, count_list, layout_ids, offsets
-        #     ):
-        #         # On the Client POD - cortx - hax container ==========>>>>>>
-        #
-        #         # # Read objects after
-        #         self.motr_obj.cat_cmd(
-        #             b_size, cnt_c, object_id_list[index], layout, outfile, node_pod, 0, di_g=True
-        #         )
-        #
-        #         self.motr_obj.md5sum_cmd(infile, outfile, node_pod, flag=True)
-        #
-        #         self.motr_obj.unlink_cmd(object_id_list[index], layout, node_pod, 0)
-        #
-        #     logger.info("Stop: Verify emap corruption detection operation")
 
         # Read the data using m0cp utility
         self.m0cat_md5sum_m0unlink(
