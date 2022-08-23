@@ -121,16 +121,20 @@ class TestCorruptDataDetection:
             node_obj = LogicalNode(
                 hostname=node["hostname"], username=node["username"], password=node["password"]
             )
-
             if node["node_type"].lower() == "master":
                 cls.master_node_list.append(node_obj)
             else:
                 cls.worker_node_list.append(node_obj)
 
-            cls.health_obj = Health(
-                hostname=node["hostname"], username=node["username"], password=node["password"]
-            )
-        cls.m0d_process = "m0d"
+            # cls.health_obj = Health(
+            #     hostname=node["hostname"], username=node["username"], password=node["password"]
+            # )
+        cls.health_obj = Health(
+            cls.master_node_list[0].hostname,
+            cls.master_node_list[0].username,
+            cls.master_node_list[0].password,
+        )
+        cls.m0d_process = const.PID_WATCH_LIST[0]
         cls.system_random = secrets.SystemRandom()
         logger.info("ENDED: Setup Operation")
 
@@ -317,6 +321,13 @@ class TestCorruptDataDetection:
         )
 
         # Todo: need to restart m0tr container for taking emap effect
+        self.dtm_obj.process_restart_with_delay(
+            health_obj=self.health_obj,
+            process=const.PID_WATCH_LIST[0],
+            pod_prefix=const.POD_NAME_PREFIX,
+            container_prefix=const.MOTR_CONTAINER_PREFIX,
+            proc_restart_delay=5,
+        )
 
         # Read the data using m0cp utility
         self.m0cat_md5sum_m0unlink(
