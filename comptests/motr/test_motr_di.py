@@ -277,7 +277,6 @@ class TestCorruptDataDetection:
         # ================
         # For all pods in the system
         for node_pod in node_pod_dict:
-
             # Format the Object ID is xxx:yyy format
             object_id = (
                 str(self.system_random.randint(1, 1024 * 1024))
@@ -298,11 +297,8 @@ class TestCorruptDataDetection:
                 )  # client_num
 
                 logger.debug(f"object_id_list is: ###### {object_id_list}")
-
-
-
-        # ==============
-            filepath = self.motr_obj.dump_m0trace_log(f"{node}-trace_log.txt", node)
+        # ====================
+            filepath = self.motr_obj.dump_m0trace_log(f"{node_pod}-trace_log.txt", node_pod)
             logger.debug("filepath is %s", filepath)
             # Fetch the FID from m0trace log
             fid_resp = self.motr_obj.read_m0trace_log(filepath)
@@ -317,9 +313,6 @@ class TestCorruptDataDetection:
         corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
             object_id_list,
             metadata_device=metadata_path[0])
-        # Todo
-        # self.motr_obj.dump_m0trace_log(filepath=, node=)
-        # tfid_dict = self.motr_obj.read_m0trace_log(filepath=)
 
         # Todo: need to restart m0tr container for taking emap effect
         # for index, node_pod in enumerate(node_pod_dict):
