@@ -345,10 +345,10 @@ class MotrCorruptionAdapter(InjectCorruption):
                         try:
                             # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
                             # -- (False, 'metadata path or fid cannot be None')
-                            logging.debug(f"oid[index] = {oid[0]}")
+                            logging.debug(f"oid[index] = {oid[index]}")
                             logging.debug(f"index = {index}")
                             emap_cmd = self.build_emap_command(
-                                fid=oid[0], selected_meta_dev=metadata_device
+                                fid=oid[index], selected_meta_dev=metadata_device
                             )
                             logging.debug(f"emap_cmd = {emap_cmd}")
                             if emap_cmd:
