@@ -331,6 +331,8 @@ class MotrCorruptionAdapter(InjectCorruption):
                 motr_containers = self.master_node_list[0].get_container_of_pod(
                     pod_name, MOTR_CONTAINER_PREFIX
                 )
+                logging.debug(f"index ---- first = {index}")
+
                 # motr_instances = len(motr_containers)  # Todo here and also check for copy to 002
                 # select 1st motr pod
                 logging.debug(f"pod_name = {pod_name}")
@@ -342,10 +344,10 @@ class MotrCorruptionAdapter(InjectCorruption):
                         try:
                             # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
                             # -- (False, 'metadata path or fid cannot be None')
-                            logging.debug(f"oid[index] = {oid[index]}")
+                            logging.debug(f"oid[index] = {oid[0]}")
                             logging.debug(f"index = {index}")
                             emap_cmd = self.build_emap_command(
-                                oid[index], selected_meta_dev=metadata_device
+                                oid[0], selected_meta_dev=metadata_device
                             )
                             logging.debug(f"emap_cmd = {emap_cmd}")
                             if emap_cmd:
