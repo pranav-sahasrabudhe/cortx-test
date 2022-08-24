@@ -319,7 +319,7 @@ class TestCorruptDataDetection:
         logger.debug("data gob id resp is %s", data_gob_id_resp)
         # ==============
         corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
-            data_gob_id_resp[0], metadata_device=metadata_path[0]
+            data_gob_id_resp, metadata_device=metadata_path[0]
         )
 
         # Restart m0d process so that emap can read latest changes
