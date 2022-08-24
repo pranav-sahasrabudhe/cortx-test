@@ -342,6 +342,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                         try:
                             # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
                             # -- (False, 'metadata path or fid cannot be None')
+                            logging.debug(f"oid[index] = {oid[index]}")
                             emap_cmd = self.build_emap_command(
                                 oid[index], selected_meta_dev=metadata_device
                             )
