@@ -322,17 +322,19 @@ class TestCorruptDataDetection:
             data_gob_id_resp, metadata_device=metadata_path[0]
         )
         logger.debug("corrupt emap response ~~~~~~~~~~~~~~~~ %s", corrupt_data_resp)
+        assert_utils.assert_true(corrupt_data_resp[0], corrupt_data_resp[1])
+
         # Restart m0d process so that emap can read latest changes
-        self.dtm_obj.process_restart_with_delay(
-            master_node=self.master_node_list[0],
-            health_obj=self.health_obj,
-            check_proc_state=True,
-            process=const.PID_WATCH_LIST[0],
-            pod_prefix=const.POD_NAME_PREFIX,
-            container_prefix=const.MOTR_CONTAINER_PREFIX,
-            proc_restart_delay=5,
-            restart_cnt=1,
-        )
+        # self.dtm_obj.process_restart_with_delay(
+        #     master_node=self.master_node_list[0],
+        #     health_obj=self.health_obj,
+        #     check_proc_state=True,
+        #     process=const.PID_WATCH_LIST[0],
+        #     pod_prefix=const.POD_NAME_PREFIX,
+        #     container_prefix=const.MOTR_CONTAINER_PREFIX,
+        #     proc_restart_delay=5,
+        #     restart_cnt=1,
+        # )
 
         # Read the data using m0cp utility
         self.m0cat_md5sum_m0unlink(
@@ -360,8 +362,7 @@ class TestCorruptDataDetection:
                     # Verify the md5sum
                     self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
                     # Delete the object
-                    self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
-                    object_list.pop()
+                    # self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
                 logger.info("Stop: Verify m0cat_md5sum_m0unlink operation")
 
     @pytest.mark.skip(reason="Feature Unavailable")

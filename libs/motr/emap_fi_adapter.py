@@ -357,7 +357,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                                     pod=pod_name,
                                     namespace=NAMESPACE,
                                     command_suffix=f"-c {motr_containers[0]} -- " f"{emap_cmd}",
-                                    # decode=True,
+                                    decode=True,
                                 )
                                 logging.debug(f"resp = {resp}")
                                 if resp:
@@ -370,12 +370,12 @@ class MotrCorruptionAdapter(InjectCorruption):
                             time.sleep(2)
                     if success:
                         break
-            # Todo:
-            # if self.restart_motr_container(0):
-            #     return True
+                # Todo:
+                # if self.restart_motr_container(0):
+            return True, resp
         except IOError as ex:
             LOGGER.exception("Exception occurred while injecting emap fault", exc_info=ex)
-            return False
+            return False, resp
 
     def inject_checksum_corruption(self, oid: list):
         """Injects data checksum error by providing the DU FID."""
