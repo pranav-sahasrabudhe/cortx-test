@@ -323,14 +323,16 @@ class TestCorruptDataDetection:
         )
 
         # Restart m0d process so that emap can read latest changes
-        # self.dtm_obj.process_restart_with_delay(
-        #     master_node=self.master_node_list[0],
-        #     health_obj=self.health_obj,
-        #     process=const.PID_WATCH_LIST[0],
-        #     pod_prefix=const.POD_NAME_PREFIX,
-        #     container_prefix=const.MOTR_CONTAINER_PREFIX,
-        #     proc_restart_delay=5,
-        # )
+        self.dtm_obj.process_restart_with_delay(
+            master_node=self.master_node_list[0],
+            health_obj=self.health_obj,
+            check_proc_state=True,
+            process=const.PID_WATCH_LIST[0],
+            pod_prefix=const.POD_NAME_PREFIX,
+            container_prefix=const.MOTR_CONTAINER_PREFIX,
+            proc_restart_delay=5,
+            restart_cnt=1,
+        )
 
         # Read the data using m0cp utility
         self.m0cat_md5sum_m0unlink(
