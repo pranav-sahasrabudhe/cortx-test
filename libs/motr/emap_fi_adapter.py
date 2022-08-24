@@ -357,7 +357,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                                     pod=pod_name,
                                     namespace=NAMESPACE,
                                     command_suffix=f"-c {motr_containers[0]} -- " f"{emap_cmd}",
-                                    decode=True,
+                                    # decode=True,
                                 )
                                 logging.debug(f"resp = {resp}")
                                 if resp:
