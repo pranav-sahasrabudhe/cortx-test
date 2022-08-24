@@ -313,7 +313,9 @@ class TestCorruptDataDetection:
         # ==============
         # Run Emap on all objects, Object id list determines the parity or data
         # self.emap_adapter_obj.inject_checksum_corruption(object_id_list)
-        data_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(metadata_path[0], fid=fid_resp)
+        data_gob_id_resp, parity_gob_id_resp = self.emap_adapter_obj.get_object_gob_id(
+            metadata_path[0], fid=fid_resp
+        )
         logger.debug("data gob id resp is %s", data_gob_id_resp)
         # ==============
         corrupt_data_resp = self.emap_adapter_obj.inject_fault_k8s(
