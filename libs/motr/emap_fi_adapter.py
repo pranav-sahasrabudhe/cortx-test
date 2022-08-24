@@ -158,6 +158,7 @@ class MotrCorruptionAdapter(InjectCorruption):
 
     def __init__(self, cmn_cfg, oid: str):
         """Initialize connection to Nodes or Pods."""
+        self.emap_bldr = None
         self.cmn_cfg = cmn_cfg
         self.nodes = cmn_cfg["nodes"]
         self.connections = list()
@@ -304,16 +305,15 @@ class MotrCorruptionAdapter(InjectCorruption):
         """
         return False
 
-    @staticmethod
-    def build_emap_command(fid: str, selected_meta_dev=None):
-        # cob_id = self.get_object_cob_id(self.oid, dtype=ftype)
+    def build_emap_command(self, fid: str, selected_meta_dev=None):
+        self.emap_bldr = EmapCommandBuilder()
         logging.debug(f"fid str = {fid}, meta_dev={selected_meta_dev}")
         if fid is None or selected_meta_dev is None:
             return False, "metadata path or fid cannot be None"
         kwargs = dict(
             corrupt_emap=fid, parse_size=10485760, emap_count=1, metadata_db_path=selected_meta_dev
         )
-        cmd = EmapCommandBuilder.build(**kwargs)
+        cmd = self.emap_bldr.build(**kwargs)
         return cmd
 
     def inject_fault_k8s(self, oid: list, metadata_device: str):
