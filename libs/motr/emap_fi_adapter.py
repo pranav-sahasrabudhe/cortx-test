@@ -332,6 +332,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                     pod_name, MOTR_CONTAINER_PREFIX
                 )
                 logging.debug(f"index ---- first = {index}")
+                logging.debug(f"oid[index] = {oid[0]}")
 
                 # motr_instances = len(motr_containers)  # Todo here and also check for copy to 002
                 # select 1st motr pod
