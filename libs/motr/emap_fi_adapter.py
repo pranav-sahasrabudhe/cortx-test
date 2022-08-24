@@ -308,7 +308,7 @@ class MotrCorruptionAdapter(InjectCorruption):
     def build_emap_command(fid: str, selected_meta_dev=None):
         # cob_id = self.get_object_cob_id(self.oid, dtype=ftype)
         logging.debug(f"fid str = {fid}, meta_dev={selected_meta_dev}")
-        if fid or selected_meta_dev is None:
+        if fid is None or selected_meta_dev is None:
             return False, "metadata path or fid cannot be None"
         kwargs = dict(
             corrupt_emap=fid, parse_size=10485760, emap_count=1, metadata_db_path=selected_meta_dev
@@ -348,7 +348,7 @@ class MotrCorruptionAdapter(InjectCorruption):
                             logging.debug(f"oid[index] = {oid[0]}")
                             logging.debug(f"index = {index}")
                             emap_cmd = self.build_emap_command(
-                                oid[0], selected_meta_dev=metadata_device
+                                fid=oid[0], selected_meta_dev=metadata_device
                             )
                             logging.debug(f"emap_cmd = {emap_cmd}")
                             if emap_cmd:
