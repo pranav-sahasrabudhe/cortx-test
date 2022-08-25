@@ -369,7 +369,7 @@ class TestCorruptDataDetection:
                     # self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
                 logger.info("Stop: Verify m0cat_md5sum_m0unlink operation")
 
-    @pytest.mark.skip(reason="Feature Unavailable")
+    # @pytest.mark.skip(reason="Feature Unavailable")
     @pytest.mark.tags("TEST-41742")
     @pytest.mark.motr_di
     def test_corrupt_checksum_emap_aligned(self):
@@ -389,6 +389,7 @@ class TestCorruptDataDetection:
 
         self.motr_inject_checksum_corruption(layout_ids, bsize_list, count_list, offsets)
 
+    # @pytest.mark.skip(reason="Feature Unavailable")
     @pytest.mark.tags("TEST-41739")
     @pytest.mark.motr_di
     def test_m0cp_m0cat_block_corruption(self):
@@ -404,7 +405,7 @@ class TestCorruptDataDetection:
         offsets = [0, 16384]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
 
-    @pytest.mark.skip(reason="Test incomplete without teardown")
+    # @pytest.mark.skip(reason="Test incomplete without teardown")
     @pytest.mark.tags("TEST-41766")
     @pytest.mark.motr_di
     def test_m0cp_m0cat_block_corruption_degraded_mode(self):
@@ -423,6 +424,7 @@ class TestCorruptDataDetection:
         offsets = [0, 16384]
         self.m0cp_corrupt_data_m0cat(layout_ids, bsize_list, count_list, offsets)
 
+    # @pytest.mark.skip(reason="Feature Unavailable")
     @pytest.mark.tags("TEST-41911")
     @pytest.mark.motr_di
     def test_m0cp_m0cat_block_corruption_unaligned(self):
@@ -503,7 +505,7 @@ class TestCorruptDataDetection:
         logger.info("Step 2: Successfully performed m0cp and corrupt the parity block")
         logger.info(f"ENDED:{test_prefix} Test Parity corruption in degraded mode - aligned")
 
-    @pytest.mark.skip(reason="Feature Unavailable")
+    # @pytest.mark.skip(reason="Feature Unavailable")
     @pytest.mark.tags("TEST-45162")
     @pytest.mark.motr_di
     def test_corrupt_data_all_du_unaligned(self):
