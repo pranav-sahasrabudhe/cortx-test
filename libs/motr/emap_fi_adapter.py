@@ -138,17 +138,17 @@ class InjectCorruption(ABC):
     """Abstract class to perform failure injection."""
 
     @abstractmethod
-    def inject_checksum_corruption(self, oid: list):
+    def inject_checksum_corruption(self, oid: list, md_path):
         """Enable Checksum failure."""
         pass
 
     @abstractmethod
-    def inject_parity_corruption(self, oid: list):
+    def inject_parity_corruption(self, oid: list, md_path):
         """Enable Checksum failure."""
         pass
 
     @abstractmethod
-    def inject_metadata_corruption(self, oid: list):
+    def inject_metadata_corruption(self, oid: list, md_path):
         """Enable metadata corruption."""
         pass
 
@@ -353,6 +353,6 @@ class MotrCorruptionAdapter(InjectCorruption):
         """Injects parity checksum error by providing the Parity FID."""
         return self.inject_fault_k8s(oid, md_path)
 
-    def inject_metadata_corruption(self, oid: list):
+    def inject_metadata_corruption(self, oid: list, md_path):
         """Not supported."""
         raise NotImplementedError("Not Implemented")
