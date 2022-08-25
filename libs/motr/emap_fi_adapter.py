@@ -190,16 +190,6 @@ class MotrCorruptionAdapter(InjectCorruption):
                 if isinstance(conn, LogicalNode):
                     conn.disconnect()
 
-    @staticmethod
-    def get_object_cob_id(self, oid, dtype):
-        """
-        Fetch COB ID from the M0CP trace file.
-        : param oid:
-        : param dtype:
-        : return: COB ID in FID format to be corrupted
-        """
-        return ""
-
     # pylint: disable-msg=too-many-locals
     def get_object_gob_id(self, metadata_device, parse_size=PARSE_SIZE, fid: dict = None):
         """
@@ -296,15 +286,6 @@ class MotrCorruptionAdapter(InjectCorruption):
             LOGGER.debug("Data is %s and metadata device is %s", data, metadata_device)
         return metadata_device
 
-    @staticmethod
-    def restart_motr_container(index):
-        """
-        Restart Motr container of index and check if it has already restarted.
-        :param index:
-        :return:
-        """
-        return False
-
     def build_emap_command(self, fid: str, selected_meta_dev=None):
         self.emap_bldr = EmapCommandBuilder()
         logging.debug(f"fid str = {fid}, meta_dev={selected_meta_dev}")
@@ -324,66 +305,53 @@ class MotrCorruptionAdapter(InjectCorruption):
         :return boolean :true :if successful
                           false: if error
         """
+        resp = None
         try:
-            # data_pods = self.master_node_list[0].get_all_pods_and_ips(POD_NAME_PREFIX)
             data_pods = self.master_node_list[0].get_all_pods(POD_NAME_PREFIX)
             for index, pod_name in enumerate(data_pods):
                 motr_containers = self.master_node_list[0].get_container_of_pod(
                     pod_name, MOTR_CONTAINER_PREFIX
                 )
-                logging.debug(f"index ---- first = {index}")
-                logging.debug(f"oid[index] = {oid[0]}")
-
-                # motr_instances = len(motr_containers)  # Todo here and also check for copy to 002
-                # select 1st motr pod
-                logging.debug(f"pod_name = {pod_name}")
-                if pod_name == "cortx-data-g0-0":
-                    logging.debug(f"Inside.......... pod_name = {pod_name}")
-                    retries = 1
-                    success = False
-                    while retries > 0:
-                        try:
-                            # kubectl exec cortx-data-g0-0 -n cortx -c cortx-motr-io-001
-                            # -- (False, 'metadata path or fid cannot be None')
-                            logging.debug(f"oid[index] = {oid[index]}")
-                            logging.debug(f"index = {index}")
-                            emap_cmd = self.build_emap_command(
-                                fid=oid[index], selected_meta_dev=metadata_device
+                logging.debug("Inside.......... pod_name = %s", pod_name)
+                retries = 1
+                success = False
+                while retries > 0:
+                    try:
+                        emap_cmd = self.build_emap_command(
+                            fid=oid[index], selected_meta_dev=metadata_device
+                        )
+                        logging.debug(f"emap_cmd = {emap_cmd}")
+                        if emap_cmd:
+                            resp = self.master_node_list[0].send_k8s_cmd(
+                                operation="exec",
+                                pod=pod_name,
+                                namespace=NAMESPACE,
+                                command_suffix=f"-c {motr_containers[0]} -- " f"{emap_cmd}",
+                                decode=True,
                             )
-                            logging.debug(f"emap_cmd = {emap_cmd}")
-                            if emap_cmd:
-                                resp = self.master_node_list[0].send_k8s_cmd(
-                                    operation="exec",
-                                    pod=pod_name,
-                                    namespace=NAMESPACE,
-                                    command_suffix=f"-c {motr_containers[0]} -- " f"{emap_cmd}",
-                                    decode=True,
-                                )
-                                logging.debug(f"resp = {resp}")
-                                if resp:
-                                    success = True
-                                    break
-                                retries -= 1
-                        except IOError as ex:
-                            LOGGER.exception("remaining retrying: %s")
+                            logging.debug(f"resp = {resp}")
+                            if resp:
+                                success = True
+                                break
                             retries -= 1
-                            time.sleep(2)
+                    except IOError as ex:
+                        LOGGER.exception("remaining retrying: %s ", retries)
+                        retries -= 1
+                        time.sleep(2)
                     if success:
                         break
-                # Todo:
-                # if self.restart_motr_container(0):
             return True, resp
         except IOError as ex:
             LOGGER.exception("Exception occurred while injecting emap fault", exc_info=ex)
             return False, resp
 
-    def inject_checksum_corruption(self, oid: list):
+    def inject_checksum_corruption(self, oid: list, md_path):
         """Injects data checksum error by providing the DU FID."""
-        return self.inject_fault_k8s(oid)
+        return self.inject_fault_k8s(oid, md_path)
 
-    def inject_parity_corruption(self, oid: list):
+    def inject_parity_corruption(self, oid: list, md_path):
         """Injects parity checksum error by providing the Parity FID."""
-        return self.inject_fault_k8s(oid)
+        return self.inject_fault_k8s(oid, md_path)
 
     def inject_metadata_corruption(self, oid: list):
         """Not supported."""
