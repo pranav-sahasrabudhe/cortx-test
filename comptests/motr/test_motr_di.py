@@ -324,7 +324,7 @@ class TestCorruptDataDetection:
         logger.debug("corrupt emap response ~~~~~~~~~~~~~~~~ %s", corrupt_data_resp)
         assert_utils.assert_true(corrupt_data_resp[0], corrupt_data_resp[1])
 
-        # Restart m0d process so that emap can read latest changes
+        # Todo: Enable - Restart m0d process once the code and product is stable and supports
         # self.dtm_obj.process_restart_with_delay(
         #     master_node=self.master_node_list[0],
         #     health_obj=self.health_obj,
@@ -363,6 +363,8 @@ class TestCorruptDataDetection:
                     )
                     # Verify the md5sum
                     self.motr_obj.md5sum_cmd(infile, outfile, node, flag=True)
+
+                    # Todo: Enable Delete objects once supported (after proc restart)
                     # Delete the object
                     # self.motr_obj.unlink_cmd(obj_id, layout, node, client_num)
                 logger.info("Stop: Verify m0cat_md5sum_m0unlink operation")
